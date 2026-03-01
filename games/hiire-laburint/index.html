@@ -345,7 +345,6 @@ body {
       <span class="icon">⭐</span>
       <span class="val" id="score-val">0</span>
     </div>
-    <div class="lives-bar" id="lives-bar"></div>
   </div>
 </div>
 
@@ -394,8 +393,8 @@ body {
 <div id="ov-dead" class="screen-overlay hidden">
   <div class="overlay-box">
     <div class="overlay-emoji">😵</div>
-    <h2>Oops!</h2>
-    <p>Sa puutusid seina! Proovi uuesti.</p>
+    <h2>Aeg sai läbi!</h2>
+    <p>Proovi uuesti — mine tagasi STARTi!</p>
     <div class="btn-row">
       <button class="btn btn-primary" onclick="restartLevel()">Proovi uuesti 🔄</button>
       <button class="btn btn-secondary" onclick="goHome()">Algusesse</button>
@@ -420,95 +419,108 @@ body {
 
 <script>
 // ==================== MAZE DEFINITIONS ====================
-// Each maze: grid of 0=path, 1=wall. Plus: star positions, start, end.
-// Using a cell-based system: each cell is CELL px. Walls are drawn as filled cells.
-
 const CELL = 28;
 
-// Build mazes as arrays of strings (W=wall, .=path, S=start, E=end, *=star)
 const MAZE_DEFS = [
-  // Level 1 — START bottom edge, FINISH top-right area
+  // Level 1 — 3-wide start bottom-left corner, finish top-right
   {
-    time: 35,
+    time: 40,
     grid: [
       "WWWWWWWWWWWWWWWWWWWW",
-      "W......EEEEW........W",
-      "W.WWWWWWWWWW.WWWWW.W",
-      "W.W........W.W...W.W",
-      "W.W.WWWWWW.W.W.W.W.W",
-      "W.W.W......W...W.W.W",
-      "W.W.W.WWWWWWWWWW.W.W",
-      "W.W.W.W..........W.W",
-      "W.W.W.W.WWWWWWWWWW.W",
-      "W.W...W.W..........W",
-      "W.W.WWW.W.WWWWWWWW.W",
-      "W.W.W...W.W........W",
-      "W...W.WWW.W.WWWWWW.W",
-      "WWW.W.....W.W......W",
-      "W...WWWWWWW.W.WWWW.W",
-      "W...........W.W....W",
-      "WWWWWWWWWWWWW.W.WWWW",
-      "WWWWWWWWWWWWW.W.WWWW",
-      "WWWWWWWWWWWWWSSWWWWW",
+      "W..................EW",
+      "W.WWWWWWWWWWWWWWWW.W",
+      "W.W..............W.W",
+      "W.W.WWWWWWWWWWWW.W.W",
+      "W.W.W..........W.W.W",
+      "W.W.W.WWWWWWWW.W.W.W",
+      "W.W.W.W......W.W.W.W",
+      "W.W.W.W.WWWW.W.W.W.W",
+      "W.W.W.W.W....W.W.W.W",
+      "W.W.W.W.W.WWWW.W.W.W",
+      "W.W.W.W.W.W....W.W.W",
+      "W.W.W.W.W.W.WWWW.W.W",
+      "W.W.W.W.W.W.W....W.W",
+      "W.W.W.W.W.W.WWWWWW.W",
+      "W.W.W.W.W.W........W",
+      "W.W.W.W.W.WWWWWWWWWW",
+      "W.W.W.W.W..........W",
+      "W.W.W.W.WWWWWWWWWWWW",
+      "W.W.W.W............W",
+      "W.W.W.WWWWWWWWWWWWWW",
+      "W.W.W..............W",
+      "W.W.WWWWWWWWWWWWWWWW",
+      "W.W................W",
+      "W.WWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "WSSS WWWWWWWWWWWWWWW",
     ],
     stars: []
   },
-  // Level 2 — START bottom center, FINISH top-left
+  // Level 2 — 3-wide start bottom-left, finish top-right, wider maze
   {
-    time: 50,
+    time: 55,
     grid: [
       "WWWWWWWWWWWWWWWWWWWWWWWW",
-      "WEEW...................W",
-      "W..W.WWWWWWWWWWWWWWW..W",
-      "W..W.W.............W..W",
-      "W..W.W.WWWWWWWWWW..W..W",
-      "W....W.W........W..W..W",
-      "WWWWWW.W.WWWWWW.W..W..W",
-      "W......W.W......W..W..W",
-      "W.WWWWWW.W.WWWWWW..W..W",
-      "W.W......W.W.......W..W",
-      "W.W.WWWWWW.W.WWWWWWW..W",
-      "W.W.W......W.W.........W",
-      "W.W.W.WWWWWW.W.WWWWWWWW",
-      "W.W.W.W......W.W.......W",
-      "W.W.W.W.WWWWWW.W.WWWW.W",
-      "W...W.W.W......W.......W",
-      "WWW.W.W.W.WWWWWWWWWWWWW",
-      "W...WWW.W..............W",
-      "W.......WWWWWWWWWSWWWWWW",
+      "W......................EW",
+      "W.WWWWWWWWWWWWWWWWWWWW.W",
+      "W.W....................W.W",
+      "W.W.WWWWWWWWWWWWWWWWW.W.W",
+      "W.W.W................W.W.W",
+      "W.W.W.WWWWWWWWWWWWW.W.W.W",
+      "W.W.W.W............W.W.W.W",
+      "W.W.W.W.WWWWWWWWW.W.W.W.W",
+      "W.W.W.W.W........W.W.W.W.W",
+      "W.W.W.W.W.WWWWWW.W.W.W.W.W",
+      "W.W.W.W.W.W......W.W.W.W.W",
+      "W.W.W.W.W.W.WWWWWW.W.W.W.W",
+      "W.W.W.W.W.W.W......W.W.W.W",
+      "W.W.W.W.W.W.WWWWWWWW.W.W.W",
+      "W.W.W.W.W.W..........W.W.W",
+      "W.W.W.W.W.WWWWWWWWWWWW.W.W",
+      "W.W.W.W.W..............W.W",
+      "W.W.W.W.WWWWWWWWWWWWWWWW.W",
+      "W.W.W.W..................W.W",
+      "W.W.W.WWWWWWWWWWWWWWWWWW.W",
+      "W.W.W....................W.W",
+      "W.W.WWWWWWWWWWWWWWWWWWWW.W",
+      "W.W......................W.W",
+      "W.WWWWWWWWWWWWWWWWWWWWWW.W",
+      "W........................W",
+      "WSSS WWWWWWWWWWWWWWWWWWWWW",
     ],
     stars: []
   },
-  // Level 3 — START bottom-left gap, FINISH top-right
+  // Level 3 — bigger spiral with detours
   {
-    time: 65,
+    time: 70,
     grid: [
-      "WWWWWWWWWWWWWWWWWWWWWWWWWW",
-      "W........................EW",
-      "W.WWWWWWWWWWWWWWWWWWWWWW.W",
-      "W.W......................W.W",
-      "W.W.WWWWWWWWWWWWWWWWWW.W.W",
-      "W.W.W..................W.W.W",
-      "W.W.W.WWWWWWWWWWWWWW.WW.W.W",
-      "W.W.W.W................W.W.W",
-      "W.W.W.W.WWWWWWWWWWWWW..W.W.W",
-      "W.W.W.W.W..............W.W.W",
-      "W.W.W.W.W.WWWWWWWWWWW.W.W.W",
-      "W.W.W.W.W.W..........W.W.W.W",
-      "W.W.W.W.W.W.WWWWWWW.WW.W.W.W",
-      "W.W.W.W.W.W.W.......W..W.W.W",
-      "W.W.W.W.W.W.W.WWWWWWW.W.W.W",
-      "W.W.W.W.W.W.W.W........W.W.W",
-      "W...W.W.W.W.W.W.WWWWWWWW.W.W",
-      "WWW.W.W.W.W.W.W.W..........W",
-      "W...W.W.W.W.W.W.WWWWWWWWWWW",
-      "W.WWW.W.W.W.W.W............W",
-      "W.....W.W.W.W.WWWWWWWWWWWWW",
-      "WWWWWWW.W.W.W..............W",
-      "W.......W.W.WWWWWWWWWWWWWWW",
-      "W.WWWWWWW.W................W",
-      "W.........WWWWWWWWWWWWWWWWW",
-      "WSWWWWWWWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+      "W..........................EW",
+      "W.WWWWWWWWWWWWWWWWWWWWWWWW.W",
+      "W.W........................W.W",
+      "W.W.WWWWWWWWWWWWWWWWWWWWW.W.W",
+      "W.W.W....................W.W.W",
+      "W.W.W.WWWWWWWWWWWWWWWW.W.W.W",
+      "W.W.W.W................W.W.W.W",
+      "W.W.W.W.WWWWWWWWWWWWW.W.W.W.W",
+      "W.W.W.W.W............W.W.W.W.W",
+      "W.W.W.W.W.WWWWWWWWW.W.W.W.W.W",
+      "W.W.W.W.W.W........W.W.W.W.W.W",
+      "W.W.W.W.W.W.WWWWWW.W.W.W.W.W.W",
+      "W.W.W.W.W.W.W......W.W.W.W.W.W",
+      "W.W.W.W.W.W.WWWWWWWW.W.W.W.W.W",
+      "W.W.W.W.W.W..........W.W.W.W.W",
+      "W.W.W.W.W.WWWWWWWWWWWW.W.W.W.W",
+      "W.W.W.W.W..............W.W.W.W",
+      "W.W.W.W.WWWWWWWWWWWWWWWW.W.W.W",
+      "W.W.W.W..................W.W.W",
+      "W.W.W.WWWWWWWWWWWWWWWWWWWW.W.W",
+      "W.W.W......................W.W",
+      "W.W.WWWWWWWWWWWWWWWWWWWWWWWW.W",
+      "W.W..........................W",
+      "W.WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+      "W..........................W",
+      "WSSS WWWWWWWWWWWWWWWWWWWWWWWWW",
     ],
     stars: []
   }
@@ -516,60 +528,50 @@ const MAZE_DEFS = [
 
 // ==================== STATE ====================
 let currentLevel = 0;
-let lives = 3;
 let score = 0;
 let levelStars = 0;
-let gameActive = false;
-let timerInterval = null;
-let timeLeft = 30;
-let maxTime = 30;
-let mouseOnCanvas = false;
 
-// Parsed maze data
-let mazeData = { rows:0, cols:0, cells:[], startCell:null, endCells:[], starCells:[] };
+// Game phases: 'idle' | 'holding' | 'countdown' | 'playing' | 'wall_hit' | 'done'
+let phase = 'idle';
+
+let timerInterval = null;
+let timeLeft = 40;
+let maxTime = 40;
+let holdTimeout = null;
+let holdProgress = 0;
+let holdAnimFrame = null;
+let holdStartTime = null;
+const HOLD_DURATION = 3000; // ms to hold on start
+
+let mazeData = { rows:0, cols:0, cells:[], startCells:[], endCells:[], starCells:[] };
 let starCollected = [];
 
 const canvas = document.getElementById('maze-canvas');
 const ctx = canvas.getContext('2d');
-
-// ==================== CURSOR ====================
 const cursorEl = document.getElementById('cursor');
 let cursorX = -100, cursorY = -100;
 
+// ==================== CURSOR ====================
 document.addEventListener('mousemove', e => {
   cursorX = e.clientX;
   cursorY = e.clientY;
   cursorEl.style.left = cursorX + 'px';
-  cursorEl.style.top = cursorY + 'px';
-  if(gameActive) checkCollision(e);
+  cursorEl.style.top  = cursorY + 'px';
+  handleMouseMove(e);
 });
 
 // ==================== UTILS ====================
 function showOverlay(id) {
-  ['ov-start','ov-level','ov-dead','ov-done'].forEach(i => {
-    document.getElementById(i).classList.toggle('hidden', i !== id);
-  });
+  ['ov-start','ov-level','ov-dead','ov-done'].forEach(i =>
+    document.getElementById(i).classList.toggle('hidden', i !== id));
 }
 function hideAllOverlays() {
   ['ov-start','ov-level','ov-dead','ov-done'].forEach(i =>
     document.getElementById(i).classList.add('hidden'));
 }
-
-function updateLives() {
-  const bar = document.getElementById('lives-bar');
-  bar.innerHTML = '';
-  for(let i=0;i<3;i++){
-    const l = document.createElement('span');
-    l.className = 'life' + (i >= lives ? ' lost' : '');
-    l.textContent = '🐭';
-    bar.appendChild(l);
-  }
-}
-
 function updateScore() {
   document.getElementById('score-val').textContent = score;
 }
-
 function buildLevelStrip() {
   const strip = document.getElementById('level-strip');
   strip.innerHTML = '';
@@ -585,384 +587,361 @@ function parseMaze(def) {
   const rows = def.grid;
   const numRows = rows.length;
   const numCols = Math.max(...rows.map(r => r.length));
-
   const cells = [];
-  let startCell = null;
+  const startCells = [];
   const endCells = [];
   const starCells = [];
 
   for(let r=0; r<numRows; r++){
     cells[r] = [];
     for(let c=0; c<numCols; c++){
-      const ch = (rows[r][c] || 'W');
+      const ch = rows[r][c] || 'W';
       let type = 'wall';
-      if(ch === '.' || ch === ' ') type = 'path';
-      else if(ch === 'S') { type = 'start'; startCell = {r,c}; }
-      else if(ch === 'E') { type = 'end'; endCells.push({r,c}); }
-      else if(ch === '*') { type = 'star'; starCells.push({r,c}); }
+      if(ch==='.' || ch===' ') type = 'path';
+      else if(ch==='S') { type='start'; startCells.push({r,c}); }
+      else if(ch==='E') { type='end';   endCells.push({r,c}); }
+      else if(ch==='*') { type='star';  starCells.push({r,c}); }
       cells[r][c] = type;
     }
   }
 
-  // Auto-place 3 stars on path cells if none defined
+  // Auto-place 3 stars along the path
   if(starCells.length === 0){
     const pathCells = [];
-    for(let r=1; r<numRows-1; r++)
-      for(let c=1; c<numCols-1; c++)
+    for(let r=1;r<numRows-1;r++)
+      for(let c=1;c<numCols-1;c++)
         if(cells[r][c]==='path') pathCells.push({r,c});
-    // Pick 3 spread-out path cells
     const step = Math.floor(pathCells.length / 4);
-    for(let i=1; i<=3; i++){
+    for(let i=1;i<=3;i++){
       const idx = Math.min(step*i, pathCells.length-1);
       starCells.push(pathCells[idx]);
       cells[pathCells[idx].r][pathCells[idx].c] = 'star';
     }
   }
 
-  return { rows: numRows, cols: numCols, cells, startCell, endCells, starCells };
+  return { rows:numRows, cols:numCols, cells, startCells, endCells, starCells };
 }
 
 // ==================== DRAWING ====================
 const COLORS = {
-  wall:    '#2d5a1b',
-  wallTop: '#4a8c2a',
-  path:    '#f5e6c8',
-  path2:   '#ede0b8',
-  start:   '#43aa8b',
-  end:     '#f94144',
-  star:    '#ffd60a',
+  wall:'#2d5a1b', wallTop:'#4a8c2a',
+  path:'#f5e6c8', path2:'#ede0b8',
+  start:'#43aa8b', end:'#f94144',
   starGlow:'rgba(255,214,10,0.4)',
 };
 
-function drawMaze() {
+let holdRingPct = 0; // 0..1 for the hold ring
+
+function drawMaze(blurred) {
   const { rows, cols, cells } = mazeData;
   canvas.width  = cols * CELL;
   canvas.height = rows * CELL;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if(blurred) {
+    ctx.filter = 'blur(4px) brightness(0.5)';
+  }
 
-  for(let r=0; r<rows; r++){
-    for(let c=0; c<cols; c++){
-      const x = c*CELL, y = r*CELL;
-      const type = cells[r][c];
-
-      if(type === 'wall'){
-        // Wall body
-        ctx.fillStyle = COLORS.wall;
-        ctx.fillRect(x, y, CELL, CELL);
-        // Wall top highlight
-        ctx.fillStyle = COLORS.wallTop;
-        ctx.fillRect(x, y, CELL, 5);
-        // Subtle texture dots
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.fillRect(x+2, y+8, 3, 3);
-        ctx.fillRect(x+CELL-8, y+14, 3, 3);
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const x=c*CELL, y=r*CELL, type=cells[r][c];
+      if(type==='wall'){
+        ctx.fillStyle=COLORS.wall; ctx.fillRect(x,y,CELL,CELL);
+        ctx.fillStyle=COLORS.wallTop; ctx.fillRect(x,y,CELL,5);
+        ctx.fillStyle='rgba(0,0,0,0.15)';
+        ctx.fillRect(x+2,y+8,3,3); ctx.fillRect(x+CELL-8,y+14,3,3);
       } else {
-        // Path — checkerboard tint
-        ctx.fillStyle = ((r+c)%2===0) ? COLORS.path : COLORS.path2;
-        ctx.fillRect(x, y, CELL, CELL);
-
-        if(type === 'start'){
-          ctx.fillStyle = COLORS.start;
-          ctx.fillRect(x, y, CELL, CELL);
-          ctx.fillStyle = '#fff';
-          ctx.font = `bold ${CELL*0.45}px Nunito`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('S', x+CELL/2, y+CELL/2+1);
+        ctx.fillStyle=((r+c)%2===0)?COLORS.path:COLORS.path2;
+        ctx.fillRect(x,y,CELL,CELL);
+        if(type==='start'){
+          ctx.fillStyle=COLORS.start; ctx.fillRect(x,y,CELL,CELL);
+          ctx.fillStyle='#fff';
+          ctx.font=`bold ${CELL*0.45}px Nunito`;
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('S',x+CELL/2,y+CELL/2+1);
         }
-
-        if(type === 'end'){
-          ctx.fillStyle = COLORS.end;
-          ctx.fillRect(x, y, CELL, CELL);
-          ctx.fillStyle = '#fff';
-          ctx.font = `bold ${CELL*0.38}px Nunito`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('F', x+CELL/2, y+CELL/2+1);
+        if(type==='end'){
+          ctx.fillStyle=COLORS.end; ctx.fillRect(x,y,CELL,CELL);
+          ctx.fillStyle='#fff';
+          ctx.font=`bold ${CELL*0.38}px Nunito`;
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('F',x+CELL/2,y+CELL/2+1);
         }
-
-        if(type === 'star'){
-          const starIdx = mazeData.starCells.findIndex(s=>s.r===r&&s.c===c);
-          if(!starCollected[starIdx]){
-            // Glow
-            const grd = ctx.createRadialGradient(x+CELL/2, y+CELL/2, 0, x+CELL/2, y+CELL/2, CELL*0.7);
-            grd.addColorStop(0, COLORS.starGlow);
-            grd.addColorStop(1, 'transparent');
-            ctx.fillStyle = grd;
-            ctx.fillRect(x-CELL*0.2, y-CELL*0.2, CELL*1.4, CELL*1.4);
-            // Star emoji
-            ctx.font = `${CELL*0.75}px serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('⭐', x+CELL/2, y+CELL/2+1);
+        if(type==='star'){
+          const idx=mazeData.starCells.findIndex(s=>s.r===r&&s.c===c);
+          if(!starCollected[idx]){
+            const grd=ctx.createRadialGradient(x+CELL/2,y+CELL/2,0,x+CELL/2,y+CELL/2,CELL*0.7);
+            grd.addColorStop(0,COLORS.starGlow); grd.addColorStop(1,'transparent');
+            ctx.fillStyle=grd; ctx.fillRect(x-CELL*.2,y-CELL*.2,CELL*1.4,CELL*1.4);
+            ctx.font=`${CELL*.75}px serif`;
+            ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillText('⭐',x+CELL/2,y+CELL/2+1);
           }
         }
       }
     }
   }
 
-  // Grid lines subtle
-  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-  ctx.lineWidth = 0.5;
-  for(let r=0;r<=rows;r++){
-    ctx.beginPath(); ctx.moveTo(0,r*CELL); ctx.lineTo(cols*CELL,r*CELL); ctx.stroke();
+  ctx.filter = 'none';
+
+  // Grid lines
+  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=0.5;
+  for(let r=0;r<=rows;r++){ctx.beginPath();ctx.moveTo(0,r*CELL);ctx.lineTo(cols*CELL,r*CELL);ctx.stroke();}
+  for(let c=0;c<=cols;c++){ctx.beginPath();ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,rows*CELL);ctx.stroke();}
+
+  // Hold progress ring over start area
+  if(phase==='holding' && mazeData.startCells.length>0){
+    const sc = mazeData.startCells[1] || mazeData.startCells[0]; // middle of 3
+    const cx = sc.c*CELL+CELL/2, cy = sc.r*CELL+CELL/2;
+    const rad = CELL*0.8;
+    ctx.strokeStyle='rgba(249,199,79,0.3)';
+    ctx.lineWidth=4;
+    ctx.beginPath(); ctx.arc(cx,cy,rad,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='#f9c74f';
+    ctx.lineWidth=4;
+    ctx.beginPath();
+    ctx.arc(cx,cy,rad,-Math.PI/2,-Math.PI/2+holdRingPct*Math.PI*2);
+    ctx.stroke();
   }
-  for(let c=0;c<=cols;c++){
-    ctx.beginPath(); ctx.moveTo(c*CELL,0); ctx.lineTo(c*CELL,rows*CELL); ctx.stroke();
+
+  // "Go back to start!" message overlay on canvas
+  if(phase==='wall_hit'){
+    ctx.fillStyle='rgba(249,65,68,0.85)';
+    const mw=canvas.width*0.75, mh=50, mx=(canvas.width-mw)/2, my=(canvas.height-mh)/2;
+    ctx.beginPath();
+    ctx.roundRect(mx,my,mw,mh,12);
+    ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.font=`bold ${CELL*0.65}px Baloo 2,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Mine tagasi STARTi! 👇',canvas.width/2,canvas.height/2);
   }
 }
 
-// ==================== COLLISION ====================
-function getCanvasCell(e) {
+// ==================== HOLD-TO-START ====================
+function isOnStart(e) {
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  return {
-    c: Math.floor(x / CELL),
-    r: Math.floor(y / CELL),
-    x, y
-  };
+  const c = Math.floor((e.clientX - rect.left)  / CELL);
+  const r = Math.floor((e.clientY - rect.top)   / CELL);
+  return mazeData.startCells.some(sc => sc.r===r && sc.c===c);
 }
 
-function checkCollision(e) {
-  if(!gameActive) return;
-  const { r, c, x, y } = getCanvasCell(e);
-  const { rows, cols, cells } = mazeData;
+function startHolding() {
+  phase = 'holding';
+  holdStartTime = performance.now();
+  holdRingPct = 0;
 
-  // Off canvas — fine, no penalty
-  if(r < 0 || r >= rows || c < 0 || c >= cols) return;
+  function animHold(now) {
+    if(phase !== 'holding') return;
+    holdRingPct = Math.min((now - holdStartTime) / HOLD_DURATION, 1);
+    drawMaze(false);
+    if(holdRingPct < 1) {
+      holdAnimFrame = requestAnimationFrame(animHold);
+    } else {
+      // Held long enough — run countdown
+      phase = 'countdown';
+      runCountdown(() => {
+        phase = 'playing';
+        startTimer();
+      });
+    }
+  }
+  holdAnimFrame = requestAnimationFrame(animHold);
+}
 
-  const type = cells[r][c];
+function cancelHolding() {
+  if(phase !== 'holding') return;
+  phase = phase === 'wall_hit' ? 'wall_hit' : 'idle';
+  cancelAnimationFrame(holdAnimFrame);
+  holdRingPct = 0;
+  drawMaze(phase === 'wall_hit');
+}
 
-  if(type === 'wall') {
-    hitWall();
+// ==================== MOUSE HANDLER ====================
+function handleMouseMove(e) {
+  const rect = canvas.getBoundingClientRect();
+  const onCanvas = e.clientX>=rect.left && e.clientX<=rect.right &&
+                   e.clientY>=rect.top  && e.clientY<=rect.bottom;
+
+  if(phase === 'playing') {
+    if(!onCanvas) return;
+    const c = Math.floor((e.clientX - rect.left) / CELL);
+    const r = Math.floor((e.clientY - rect.top)  / CELL);
+    const { rows, cols, cells } = mazeData;
+    if(r<0||r>=rows||c<0||c>=cols) return;
+    const type = cells[r][c];
+
+    if(type === 'wall') { hitWall(); return; }
+    if(type === 'end')  { levelComplete(); return; }
+    if(type === 'star') {
+      const idx = mazeData.starCells.findIndex(s=>s.r===r&&s.c===c);
+      if(idx>=0 && !starCollected[idx]){
+        starCollected[idx]=true; score+=10; levelStars++;
+        updateScore(); drawMaze(false);
+      }
+    }
     return;
   }
 
-  if(type === 'end') {
-    levelComplete();
-    return;
-  }
-
-  if(type === 'star') {
-    const idx = mazeData.starCells.findIndex(s=>s.r===r&&s.c===c);
-    if(idx >= 0 && !starCollected[idx]) {
-      starCollected[idx] = true;
-      score += 10;
-      levelStars++;
-      updateScore();
-      drawMaze();
+  if(phase === 'idle' || phase === 'wall_hit') {
+    if(!onCanvas) { cancelHolding(); return; }
+    if(isOnStart(e)) {
+      if(phase !== 'holding') startHolding();
+    } else {
+      if(phase === 'holding') {
+        const savedPhase = phase === 'wall_hit' ? 'wall_hit' : 'idle';
+        phase = savedPhase;
+        cancelAnimationFrame(holdAnimFrame);
+        holdRingPct = 0;
+        drawMaze(savedPhase === 'wall_hit');
+      }
     }
   }
 }
 
+// ==================== WALL HIT ====================
 function hitWall() {
-  gameActive = false;
+  if(phase !== 'playing') return;
+  phase = 'wall_hit';
   stopTimer();
-  lives--;
-  updateLives();
 
-  // Flash red
+  // Flash
   const flash = document.getElementById('flash');
   flash.classList.add('show');
-  setTimeout(() => flash.classList.remove('show'), 300);
+  setTimeout(()=>flash.classList.remove('show'), 300);
 
-  if(lives <= 0) {
-    setTimeout(() => { lives = 0; showOverlay('ov-dead'); }, 400);
-  } else {
-    setTimeout(() => restartLevel(true), 500);
-  }
+  drawMaze(true); // blurred + message
 }
 
+// ==================== LEVEL COMPLETE ====================
 function levelComplete() {
-  gameActive = false;
+  if(phase !== 'playing') return;
+  phase = 'idle';
   stopTimer();
 
-  // Time bonus
   const timeBonus = Math.round(timeLeft * 2);
-  score += timeBonus + (levelStars * 10);
+  score += timeBonus;
   updateScore();
 
   const starsEarned = levelStars;
-  const emoji = starsEarned >= 3 ? '🏆' : starsEarned >= 2 ? '🌟' : starsEarned >= 1 ? '⭐' : '🎉';
+  const emoji = starsEarned>=3?'🏆':starsEarned>=2?'🌟':starsEarned>=1?'⭐':'🎉';
 
   document.getElementById('ov-lvl-emoji').textContent = emoji;
-  document.getElementById('ov-lvl-title').textContent = 'Tase ' + (currentLevel+1) + ' läbitud!';
+  document.getElementById('ov-lvl-title').textContent = 'Tase '+(currentLevel+1)+' läbitud!';
   document.getElementById('ov-lvl-msg').textContent =
     `Ajabonus: +${timeBonus} | Tähed: +${starsEarned*10}`;
 
-  // Stars display
   const sr = document.getElementById('ov-stars');
-  sr.innerHTML = '';
-  for(let i=0;i<3;i++){
-    sr.innerHTML += `<span style="opacity:${i<starsEarned?1:0.2};filter:${i<starsEarned?'':'grayscale(1)'}">⭐</span>`;
-  }
+  sr.innerHTML='';
+  for(let i=0;i<3;i++)
+    sr.innerHTML+=`<span style="opacity:${i<starsEarned?1:0.2};filter:${i<starsEarned?'':'grayscale(1)'}">⭐</span>`;
 
   const nextBtn = document.getElementById('ov-next-btn');
-  if(currentLevel + 1 >= MAZE_DEFS.length) {
-    nextBtn.textContent = 'Lõpp! 🏆';
-    nextBtn.onclick = showDone;
+  if(currentLevel+1 >= MAZE_DEFS.length){
+    nextBtn.textContent='Lõpp! 🏆'; nextBtn.onclick=showDone;
   } else {
-    nextBtn.textContent = 'Järgmine tase ➡';
-    nextBtn.onclick = nextLevel;
+    nextBtn.textContent='Järgmine tase ➡'; nextBtn.onclick=nextLevel;
   }
-
   showOverlay('ov-level');
 }
 
 // ==================== TIMER ====================
 function startTimer() {
   const def = MAZE_DEFS[currentLevel];
-  timeLeft = def.time;
-  maxTime = def.time;
-  document.getElementById('timer-wrap').style.display = 'flex';
+  timeLeft = def.time; maxTime = def.time;
+  document.getElementById('timer-wrap').style.display='flex';
   updateTimerUI();
-  timerInterval = setInterval(() => {
-    timeLeft = Math.max(0, timeLeft - 1);
+  timerInterval = setInterval(()=>{
+    timeLeft = Math.max(0, timeLeft-1);
     updateTimerUI();
-    if(timeLeft <= 0 && gameActive) {
-      hitWall(); // treat timeout as wall hit
+    if(timeLeft<=0 && phase==='playing') {
+      phase = 'idle';
+      stopTimer();
+      showOverlay('ov-dead');
     }
-  }, 1000);
+  },1000);
 }
-
-function stopTimer() {
-  clearInterval(timerInterval);
-  timerInterval = null;
-}
-
-function updateTimerUI() {
-  document.getElementById('timer-label').textContent = timeLeft + 's';
-  const pct = (timeLeft / maxTime) * 100;
-  const fill = document.getElementById('timer-fill');
-  fill.style.width = pct + '%';
-  fill.style.background = pct > 50
-    ? 'linear-gradient(90deg,#90be6d,#f9c74f)'
-    : pct > 25
-    ? 'linear-gradient(90deg,#f9c74f,#f4a024)'
-    : 'linear-gradient(90deg,#f94144,#f4a024)';
+function stopTimer(){ clearInterval(timerInterval); timerInterval=null; }
+function updateTimerUI(){
+  document.getElementById('timer-label').textContent=timeLeft+'s';
+  const pct=(timeLeft/maxTime)*100;
+  const fill=document.getElementById('timer-fill');
+  fill.style.width=pct+'%';
+  fill.style.background=pct>50
+    ?'linear-gradient(90deg,#90be6d,#f9c74f)'
+    :pct>25?'linear-gradient(90deg,#f9c74f,#f4a024)'
+    :'linear-gradient(90deg,#f94144,#f4a024)';
 }
 
 // ==================== COUNTDOWN ====================
-function showStartArrow() {
-  if(!mazeData.startCell) return;
-  const rect = canvas.getBoundingClientRect();
-  const wrap = canvas.parentElement.getBoundingClientRect();
-  const arrow = document.getElementById('start-arrow');
-  const sc = mazeData.startCell;
-  const x = rect.left - wrap.left + sc.c * CELL + CELL / 2;
-  // START is on bottom edge — arrow points UP from below canvas
-  const y = rect.bottom - wrap.top + 10;
-  arrow.style.left = x + 'px';
-  arrow.style.top  = y + 'px';
-  arrow.style.transform = 'translate(-50%, 0)';
-  arrow.textContent = '👆';
-  arrow.style.display = 'block';
-}
-
-function hideStartArrow() {
-  document.getElementById('start-arrow').style.display = 'none';
-}
-
 function runCountdown(callback) {
   const overlay = document.getElementById('countdown-overlay');
   const numEl   = document.getElementById('countdown-number');
   overlay.classList.remove('hidden');
-  showStartArrow();
-
-  let count = 3;
-  numEl.className = '';
-  numEl.textContent = count;
-  void numEl.offsetWidth;
-
-  const tick = setInterval(() => {
+  let count=3;
+  numEl.className=''; numEl.textContent=count; void numEl.offsetWidth;
+  const tick = setInterval(()=>{
     count--;
-    if(count > 0) {
-      numEl.className = '';
-      void numEl.offsetWidth;
-      numEl.textContent = count;
+    if(count>0){
+      numEl.className=''; void numEl.offsetWidth; numEl.textContent=count;
     } else {
-      numEl.classList.add('go');
-      void numEl.offsetWidth;
-      numEl.textContent = 'Läks!';
+      numEl.classList.add('go'); void numEl.offsetWidth; numEl.textContent='Läks!';
       clearInterval(tick);
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-        hideStartArrow();
-        callback();
-      }, 700);
+      setTimeout(()=>{ overlay.classList.add('hidden'); callback(); }, 700);
     }
   }, 900);
 }
 
 // ==================== GAME FLOW ====================
 function loadLevel() {
-  const def = MAZE_DEFS[currentLevel];
-  mazeData = parseMaze(def);
+  mazeData = parseMaze(MAZE_DEFS[currentLevel]);
   starCollected = new Array(mazeData.starCells.length).fill(false);
   levelStars = 0;
+  holdRingPct = 0;
   buildLevelStrip();
-  drawMaze();
+  drawMaze(false);
 }
 
 function startGame() {
-  currentLevel = 0;
-  lives = 3;
-  score = 0;
-  updateLives();
+  currentLevel=0; score=0;
   updateScore();
   loadLevel();
   hideAllOverlays();
-  runCountdown(() => {
-    gameActive = true;
-    startTimer();
-  });
-}
-
-function restartLevel(keepLives = false) {
-  stopTimer();
-  loadLevel();
-  hideAllOverlays();
-  runCountdown(() => {
-    gameActive = true;
-    startTimer();
-  });
+  phase = 'idle';
+  drawMaze(false);
 }
 
 function nextLevel() {
   currentLevel++;
+  if(currentLevel >= MAZE_DEFS.length){ showDone(); return; }
   stopTimer();
-  if(currentLevel >= MAZE_DEFS.length) { showDone(); return; }
   loadLevel();
   hideAllOverlays();
-  gameActive = true;
-  startTimer();
+  phase = 'idle';
 }
 
 function showDone() {
   document.getElementById('final-score').textContent = score;
   showOverlay('ov-done');
 }
-
-function restartAll() {
-  startGame();
+function restartAll(){ startGame(); }
+function restartLevel(){
+  stopTimer();
+  loadLevel();
+  hideAllOverlays();
+  phase = 'idle';
 }
-
-function goHome() {
-  window.location.href = '../../index.html';
-}
+function goHome(){ window.location.href='../../index.html'; }
 
 // ==================== INIT ====================
-updateLives();
 updateScore();
 buildLevelStrip();
-
-// Draw first maze preview
 mazeData = parseMaze(MAZE_DEFS[0]);
 starCollected = new Array(mazeData.starCells.length).fill(false);
-drawMaze();
+drawMaze(false);
 showOverlay('ov-start');
+
+// Build mazes as arrays of strings (W=wall, .=path, S=start, E=end, *=star)
 </script>
 </body>
 </html>
