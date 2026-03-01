@@ -124,47 +124,57 @@ body {
   box-shadow: 0 0 0 4px rgba(74,140,42,0.4), 0 20px 60px rgba(0,0,0,0.6);
 }
 
-/* Overlay screens */
-.overlay {
-  position: absolute;
+/* Full-screen overlays — sit outside maze, centered on viewport */
+.screen-overlay {
+  position: fixed;
   inset: 0;
-  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,20,10,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  animation: fadeIn 0.3s ease;
+}
+.screen-overlay.hidden { display: none; }
+
+.overlay-box {
+  background: rgba(22,45,18,0.97);
+  border: 1px solid rgba(74,140,42,0.4);
+  border-radius: 20px;
+  padding: 32px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 14px;
-  background: rgba(15,25,15,0.88);
-  backdrop-filter: blur(6px);
-  z-index: 10;
-  animation: fadeIn 0.35s ease;
-}
-.overlay.hidden { display: none; }
-
-@keyframes fadeIn {
-  from { opacity:0; transform:scale(0.96); }
-  to   { opacity:1; transform:scale(1); }
+  max-width: 340px;
+  width: 90vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  animation: fadeIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
 
-.overlay-emoji { font-size: 4.5rem; animation: bounce 0.6s ease infinite alternate; }
-@keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-10px)} }
-
-.overlay h2 {
+.overlay-box h2 {
   font-family: 'Baloo 2', cursive;
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 800;
   color: var(--accent);
-  text-shadow: 0 0 20px rgba(249,199,79,0.6);
+  text-shadow: 0 0 20px rgba(249,199,79,0.5);
   text-align: center;
 }
-
-.overlay p {
+.overlay-box p {
   color: var(--muted);
   font-size: 0.95rem;
   text-align: center;
-  max-width: 280px;
   line-height: 1.5;
 }
+
+@keyframes fadeIn {
+  from { opacity:0; transform:scale(0.94); }
+  to   { opacity:1; transform:scale(1); }
+}
+
+.overlay-emoji { font-size: 4rem; animation: bounce 0.6s ease infinite alternate; }
+@keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-10px)} }
 
 .btn {
   font-family: 'Baloo 2', cursive;
@@ -348,9 +358,18 @@ body {
     <div id="countdown-number">3</div>
   </div>
   <div id="start-arrow">👇</div>
+</div>
 
-  <!-- Start overlay -->
-  <div class="overlay" id="ov-start">
+<div id="bottom-bar">
+  <div class="timer-wrap" id="timer-wrap" style="display:none;">
+    <span class="timer-label" id="timer-label">0s</span>
+    <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-fill" style="width:100%"></div></div>
+  </div>
+</div>
+
+<!-- Overlays — outside maze, full screen -->
+<div id="ov-start" class="screen-overlay">
+  <div class="overlay-box">
     <div class="overlay-emoji">🐭</div>
     <h2>Hiire Labürint!</h2>
     <p>Juhi hiirt START-ist FINIŠ-ini ilma seinu puudutamata.<br>Koguga teel ⭐ tähti!</p>
@@ -358,9 +377,10 @@ body {
       <button class="btn btn-primary" onclick="startGame()">Alusta! 🚀</button>
     </div>
   </div>
+</div>
 
-  <!-- Level complete overlay -->
-  <div class="overlay hidden" id="ov-level">
+<div id="ov-level" class="screen-overlay hidden">
+  <div class="overlay-box">
     <div class="overlay-emoji" id="ov-lvl-emoji">🎉</div>
     <h2 id="ov-lvl-title">Tase läbitud!</h2>
     <div class="stars-row" id="ov-stars"></div>
@@ -369,9 +389,10 @@ body {
       <button class="btn btn-primary" id="ov-next-btn" onclick="nextLevel()">Järgmine tase ➡</button>
     </div>
   </div>
+</div>
 
-  <!-- Game over overlay -->
-  <div class="overlay hidden" id="ov-dead">
+<div id="ov-dead" class="screen-overlay hidden">
+  <div class="overlay-box">
     <div class="overlay-emoji">😵</div>
     <h2>Oops!</h2>
     <p>Sa puutusid seina! Proovi uuesti.</p>
@@ -380,9 +401,10 @@ body {
       <button class="btn btn-secondary" onclick="goHome()">Algusesse</button>
     </div>
   </div>
+</div>
 
-  <!-- All done overlay -->
-  <div class="overlay hidden" id="ov-done">
+<div id="ov-done" class="screen-overlay hidden">
+  <div class="overlay-box">
     <div class="overlay-emoji">🏆</div>
     <h2>Labürint läbitud!</h2>
     <p>Sa läbisid kõik tasemed! Oled tõeline hiire-kangelane!</p>
@@ -393,13 +415,6 @@ body {
       <button class="btn btn-primary" onclick="restartAll()">Mängi uuesti 🔄</button>
       <button class="btn btn-secondary" onclick="goHome()">Koju</button>
     </div>
-  </div>
-</div>
-
-<div id="bottom-bar">
-  <div class="timer-wrap" id="timer-wrap" style="display:none;">
-    <span class="timer-label" id="timer-label">0s</span>
-    <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-fill" style="width:100%"></div></div>
   </div>
 </div>
 
