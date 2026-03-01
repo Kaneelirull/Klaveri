@@ -382,7 +382,8 @@ function startGame(l) {
   document.getElementById('game-screen').style.display = 'flex';
 
   wordHint.textContent = HINTS[lang];
-  timerPill.className = 'timer-pill';
+  timerPill.textContent = `⏱ 60`;
+  timerPill.className = '';
   liveBalloons.clear();
   updateUI();
   nextTarget();
