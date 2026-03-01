@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Värviõhupallid 🎈</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  background: #06001a;
+  user-select: none;
+}
+
+canvas#bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ─── SCREENS ─── */
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* LANG SELECT */
+#lang-screen {
+  background: transparent;
+  gap: 28px;
+}
+.lang-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2rem, 7vw, 4rem);
+  color: #fff;
+  text-align: center;
+  line-height: 1.15;
+  text-shadow: 0 0 60px rgba(180,120,255,0.7);
+}
+.lang-title .sub {
+  display: block;
+  font-size: 0.55em;
+  color: rgba(255,255,255,0.5);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  margin-top: 6px;
+  letter-spacing: 0.08em;
+}
+.lang-cards {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.lang-card {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 24px;
+  padding: 28px 38px;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  min-width: 160px;
+}
+.lang-card:hover {
+  transform: translateY(-6px) scale(1.06);
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.5);
+  box-shadow: 0 16px 48px rgba(180,120,255,0.35);
+}
+.lang-card .em { font-size: 3rem; margin-bottom: 10px; }
+.lang-card .nm { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: #fff; }
+.lang-card .sm { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+/* GAME SCREEN */
+#game-screen { display: none; background: transparent; justify-content: flex-start; }
+
+/* HUD */
+#hud {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 14px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 30;
+  pointer-events: none;
+}
+#hud > * { pointer-events: all; }
+#back-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.95rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.6);
+  border-radius: 999px;
+  padding: 7px 18px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+#back-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+#score-pill {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  color: #ffd166;
+  text-shadow: 0 0 20px rgba(255,209,102,0.7);
+}
+#timer-pill {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.3rem;
+  color: rgba(255,255,255,0.7);
+  min-width: 64px;
+  text-align: right;
+}
+#timer-pill.urgent { color: #ff4757; animation: timerPulse 0.5s ease infinite alternate; }
+@keyframes timerPulse { from { opacity: 1; } to { opacity: 0.5; } }
+
+/* Progress bar */
+#prog-wrap {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  z-index: 40;
+  background: rgba(255,255,255,0.07);
+}
+#prog-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #06d6a0, #ffd166, #ff6b9d);
+  border-radius: 0 3px 3px 0;
+  transition: width 0.35s ease;
+  box-shadow: 0 0 12px rgba(6,214,160,0.8);
+}
+
+/* Color word */
+#word-wrap {
+  position: fixed;
+  top: 62px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  text-align: center;
+  pointer-events: none;
+}
+#word-hint {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 4px;
+}
+#color-word {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.4rem, 7vw, 4.5rem);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  filter: drop-shadow(0 0 24px currentColor);
+  animation: wordAppear 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes wordAppear {
+  from { transform: scale(0.5) rotate(-6deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);    opacity: 1; }
+}
+
+/* Balloon stage */
+#stage {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+#stage > * { pointer-events: all; }
+
+/* END SCREEN */
+#end-screen {
+  display: none;
+  background: rgba(6,0,26,0.88);
+  backdrop-filter: blur(12px);
+  z-index: 50;
+  gap: 18px;
+}
+.end-icon { font-size: 5rem; animation: iconPop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes iconPop { from{transform:scale(0)} to{transform:scale(1)} }
+.end-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2rem, 7vw, 3.5rem);
+  color: #fff;
+  text-align: center;
+}
+.end-score { font-size: 1.2rem; color: rgba(255,255,255,0.55); }
+.end-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+.end-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.15rem;
+  padding: 13px 32px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.end-btn-go {
+  background: linear-gradient(135deg, #ffd166, #ff9f43);
+  color: #1a0040;
+  box-shadow: 0 6px 28px rgba(255,209,102,0.45);
+}
+.end-btn-go:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(255,209,102,0.65); }
+.end-btn-lang {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.end-btn-lang:hover { background: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<!-- LANGUAGE SELECT -->
+<div class="screen" id="lang-screen">
+  <div class="lang-title">
+    🎈 Värviõhupallid
+    <span class="sub">Vali keel · Choose language · Välj språk</span>
+  </div>
+  <div class="lang-cards">
+    <div class="lang-card" onclick="startGame('et')">
+      <div class="em">🇪🇪</div>
+      <div class="nm">Eesti</div>
+      <div class="sm">Estonian</div>
+    </div>
+    <div class="lang-card" onclick="startGame('en')">
+      <div class="em">🇬🇧</div>
+      <div class="nm">English</div>
+      <div class="sm">inglise keel</div>
+    </div>
+    <div class="lang-card" onclick="startGame('sv')">
+      <div class="em">🇸🇪</div>
+      <div class="nm">Svenska</div>
+      <div class="sm">rootsi keel</div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game-screen">
+  <div id="prog-wrap"><div id="prog-bar" style="width:0"></div></div>
+  <div id="hud">
+    <a id="back-btn" href="../../index.html">← Tagasi</a>
+    <div id="score-pill">⭐ 0 / 15</div>
+    <div id="timer-pill">⏱ 30</div>
+  </div>
+  <div id="word-wrap">
+    <div id="word-hint">pop the balloon!</div>
+    <div id="color-word">punane</div>
+  </div>
+  <div id="stage"></div>
+</div>
+
+<!-- END -->
+<div class="screen" id="end-screen">
+  <div class="end-icon" id="end-icon">🎉</div>
+  <div class="end-title" id="end-title">Võitsid!</div>
+  <div class="end-score" id="end-score">Skoor: 15</div>
+  <div class="end-btns">
+    <button class="end-btn end-btn-go" onclick="restartGame()">🔄 Mängi uuesti</button>
+    <button class="end-btn end-btn-lang" onclick="goLang()">🌍 Vaheta keelt</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════
+const COLORS = [
+  { id:'red',    hex:'#ff3f3f', et:'punane',    en:'red',    sv:'röd'     },
+  { id:'blue',   hex:'#3b82f6', et:'sinine',    en:'blue',   sv:'blå'     },
+  { id:'green',  hex:'#22c55e', et:'roheline',  en:'green',  sv:'grön'    },
+  { id:'yellow', hex:'#facc15', et:'kollane',   en:'yellow', sv:'gul'     },
+  { id:'orange', hex:'#fb923c', et:'oranž',     en:'orange', sv:'orange'  },
+  { id:'pink',   hex:'#f472b6', et:'roosa',     en:'pink',   sv:'rosa'    },
+  { id:'purple', hex:'#a855f7', et:'lilla',     en:'purple', sv:'lila'    },
+  { id:'cyan',   hex:'#22d3ee', et:'türkiis',   en:'cyan',   sv:'cyan'    },
+];
+
+const HINTS = {
+  et:'lõhku õhupall!', en:'pop the balloon!', sv:'poppa ballongen!'
+};
+const WIN_MSG  = { et:'Võitsid! 🏆', en:'You won! 🏆', sv:'Du vann! 🏆' };
+const LOSE_MSG = { et:'Aeg sai läbi!', en:'Time\'s up!', sv:'Tiden är ute!' };
+const SCORE_LBL = { et:'Skoor', en:'Score', sv:'Poäng' };
+
+// ══════════════════════════════════════════
+//  STARFIELD BACKGROUND
+// ══════════════════════════════════════════
+const bgCanvas = document.getElementById('bg');
+const bgCtx = bgCanvas.getContext('2d');
+let stars = [];
+
+function initStars() {
+  bgCanvas.width  = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+  stars = Array.from({length:160}, () => ({
+    x: Math.random() * bgCanvas.width,
+    y: Math.random() * bgCanvas.height,
+    r: Math.random() * 1.4 + 0.3,
+    base: Math.random() * 0.6 + 0.15,
+    phase: Math.random() * Math.PI * 2,
+    speed: Math.random() * 0.4 + 0.2,
+  }));
+}
+
+let bgT = 0;
+function drawBg() {
+  bgT += 0.012;
+  const W = bgCanvas.width, H = bgCanvas.height;
+  // gradient sky
+  const g = bgCtx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#06001a');
+  g.addColorStop(0.5, '#0d0030');
+  g.addColorStop(1, '#140048');
+  bgCtx.fillStyle = g;
+  bgCtx.fillRect(0, 0, W, H);
+  // stars
+  for (const s of stars) {
+    const o = s.base + 0.3 * Math.sin(bgT * s.speed + s.phase);
+    bgCtx.beginPath();
+    bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    bgCtx.fillStyle = `rgba(255,255,255,${Math.max(0,o)})`;
+    bgCtx.fill();
+  }
+  requestAnimationFrame(drawBg);
+}
+
+window.addEventListener('resize', () => { initStars(); });
+initStars();
+drawBg();
+
+// ══════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════
+let lang = 'et';
+let score = 0;
+let timeLeft = 30;
+let clockInterval = null;
+let active = false;
+let targetColor = null;
+let balloonPool = []; // {id, el, colorId, raf, remove}
+let bId = 0;
+
+const stage      = document.getElementById('stage');
+const scorePill  = document.getElementById('score-pill');
+const timerPill  = document.getElementById('timer-pill');
+const progBar    = document.getElementById('prog-bar');
+const colorWord  = document.getElementById('color-word');
+const wordHint   = document.getElementById('word-hint');
+
+// ══════════════════════════════════════════
+//  ENTRY
+// ══════════════════════════════════════════
+function startGame(l) {
+  lang = l;
+  score = 0;
+  timeLeft = 30;
+  active = true;
+  balloonPool = [];
+  bId = 0;
+  stage.innerHTML = '';
+
+  document.getElementById('lang-screen').style.display = 'none';
+  document.getElementById('end-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+
+  wordHint.textContent = HINTS[lang];
+  timerPill.className = 'timer-pill';
+  updateUI();
+  nextTarget();
+  spawnWave();
+
+  clearInterval(clockInterval);
+  clockInterval = setInterval(tick, 1000);
+}
+
+function tick() {
+  if (!active) return;
+  timeLeft--;
+  timerPill.textContent = `⏱ ${timeLeft}`;
+  if (timeLeft <= 5) timerPill.className = 'urgent';
+  if (timeLeft <= 0) endGame(false);
+}
+
+// ══════════════════════════════════════════
+//  TARGET COLOR
+// ══════════════════════════════════════════
+function nextTarget() {
+  const pool = COLORS.filter(c => !targetColor || c.id !== targetColor.id);
+  targetColor = pool[Math.floor(Math.random() * pool.length)];
+  // Re-animate word
+  colorWord.style.animation = 'none';
+  colorWord.offsetWidth; // reflow
+  colorWord.style.animation = '';
+  colorWord.textContent = targetColor[lang];
+  colorWord.style.color = targetColor.hex;
+}
+
+// ══════════════════════════════════════════
+//  BALLOONS
+// ══════════════════════════════════════════
+function spawnWave() {
+  if (!active) return;
+  // Pick 4 distinct colors always including target
+  const rest = COLORS.filter(c => c.id !== targetColor.id);
+  shuffle(rest);
+  const four = [targetColor, rest[0], rest[1], rest[2]];
+  shuffle(four);
+
+  const W = window.innerWidth;
+  // Space evenly across width with some randomness
+  const slots = [0.12, 0.37, 0.63, 0.88];
+  shuffle(slots);
+
+  four.forEach((color, i) => {
+    const x = slots[i] * W;
+    addBalloon(color, x);
+  });
+}
+
+function addBalloon(color, x) {
+  if (!active) return;
+  const id = bId++;
+  const SIZE = 90 + Math.random() * 30; // balloon width px
+  const duration = 20 + Math.random() * 12; // seconds to cross screen
+  const swayAmp  = 18 + Math.random() * 22;
+  const swayFreq = 0.6 + Math.random() * 0.8;
+  const startBottom = -(SIZE * 1.4 + 20);
+
+  const el = document.createElement('div');
+  el.style.cssText = `
+    position:absolute;
+    left:${x}px;
+    bottom:${startBottom}px;
+    transform:translateX(-50%);
+    cursor:pointer;
+    transition:filter 0.15s;
+    will-change:bottom,transform;
+    z-index:20;
+  `;
+  el.innerHTML = makeBalloonSVG(color.hex, SIZE);
+  stage.appendChild(el);
+
+  el.addEventListener('click', () => onBalloonClick(id, color, el));
+  el.addEventListener('mouseenter', () => { el.style.filter = 'brightness(1.25) drop-shadow(0 0 20px ' + color.hex + ')'; });
+  el.addEventListener('mouseleave', () => { el.style.filter = ''; });
+
+  const startTime = performance.now();
+  const totalTravel = window.innerHeight + SIZE * 1.6 + 60;
+
+  function frame(now) {
+    if (!document.contains(el)) return;
+    const t = (now - startTime) / 1000;
+    const frac = t / duration;
+    if (frac >= 1) {
+      el.remove();
+      if (active) {
+        // Replace with a balloon that might be target color
+        const candidates = [targetColor, targetColor, ...COLORS.filter(c=>c.id!==targetColor.id)];
+        const pick = candidates[Math.floor(Math.random()*candidates.length)];
+        const newX = Math.random() * 0.76 * window.innerWidth + 0.12 * window.innerWidth;
+        setTimeout(() => addBalloon(pick, newX), 300);
+      }
+      return;
+    }
+    const bottom = startBottom + frac * totalTravel;
+    const sway   = Math.sin(t * swayFreq) * swayAmp;
+    el.style.bottom    = bottom + 'px';
+    el.style.transform = `translateX(calc(-50% + ${sway}px))`;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ══════════════════════════════════════════
+//  BALLOON SVG
+// ══════════════════════════════════════════
+function makeBalloonSVG(hex, size) {
+  const h = Math.round(size * 1.35);
+  const uid = hex.replace('#','');
+  const light = blendHex(hex, '#ffffff', 0.45);
+  const dark  = blendHex(hex, '#000000', 0.25);
+  return `<svg width="${size}" height="${h}" viewBox="0 0 100 135" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="rg${uid}" cx="36%" cy="30%" r="65%">
+      <stop offset="0%"   stop-color="${light}"/>
+      <stop offset="60%"  stop-color="${hex}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </radialGradient>
+    <radialGradient id="rg2${uid}" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${hex}" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="${dark}" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow${uid}" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="${hex}" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <!-- body -->
+  <ellipse cx="50" cy="54" rx="44" ry="52" fill="url(#rg${uid})" filter="url(#shadow${uid})"/>
+  <!-- shine -->
+  <ellipse cx="34" cy="32" rx="11" ry="16" fill="rgba(255,255,255,0.28)" transform="rotate(-22,34,32)"/>
+  <ellipse cx="40" cy="26" rx="4"  ry="6"  fill="rgba(255,255,255,0.45)" transform="rotate(-22,40,26)"/>
+  <!-- knot -->
+  <path d="M50 106 Q47 113 50 120 Q53 113 50 106" fill="${dark}"/>
+  <!-- string -->
+  <path d="M50 120 Q53 127 50 135" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>`;
+}
+
+function blendHex(hex, to, t) {
+  const a = hexToRgb(hex), b = hexToRgb(to);
+  const r = Math.round(a[0]*(1-t)+b[0]*t);
+  const g = Math.round(a[1]*(1-t)+b[1]*t);
+  const bl= Math.round(a[2]*(1-t)+b[2]*t);
+  return `rgb(${r},${g},${bl})`;
+}
+function hexToRgb(h) {
+  const n=parseInt(h.replace('#',''),16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+
+// ══════════════════════════════════════════
+//  CLICK HANDLER
+// ══════════════════════════════════════════
+function onBalloonClick(id, color, el) {
+  if (!active) return;
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width  * 0.5;
+  const cy = rect.top  + rect.height * 0.45;
+
+  if (color.id === targetColor.id) {
+    // ✅ correct
+    score = Math.min(15, score + 1);
+    popEffect(cx, cy, color.hex, true);
+    el.remove();
+    updateUI();
+    if (score >= 15) { endGame(true); return; }
+    nextTarget();
+    // Always keep 4 balloons — spawn replacement
+    setTimeout(() => {
+      if (active) {
+        const newX = Math.random() * 0.76 * window.innerWidth + 0.12 * window.innerWidth;
+        const rest = COLORS.filter(c => c.id !== targetColor.id);
+        shuffle(rest);
+        const picks = [targetColor, rest[0], rest[1]];
+        addBalloon(picks[Math.floor(Math.random()*picks.length)], newX);
+      }
+    }, 200);
+  } else {
+    // ❌ wrong
+    if (score > 0) score--;
+    popEffect(cx, cy, color.hex, false);
+    el.style.filter = 'saturate(0.15) brightness(0.5)';
+    el.style.pointerEvents = 'none';
+    setTimeout(() => {
+      el.style.filter = '';
+      el.style.pointerEvents = '';
+    }, 600);
+    updateUI();
+  }
+}
+
+// ══════════════════════════════════════════
+//  EFFECTS
+// ══════════════════════════════════════════
+function popEffect(x, y, hex, correct) {
+  // floating delta
+  const d = document.createElement('div');
+  d.textContent = correct ? '+1' : '-1';
+  d.style.cssText = `
+    position:fixed; left:${x}px; top:${y}px;
+    font-family:'Fredoka One',cursive; font-size:2.2rem;
+    color:${correct?'#4ade80':'#f87171'};
+    text-shadow:0 0 20px ${correct?'#4ade80':'#f87171'};
+    pointer-events:none; z-index:80;
+    animation:floatUp 0.9s ease-out forwards;
+    transform:translate(-50%,-50%);
+  `;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 900);
+
+  // particle burst
+  if (!correct) return; // skip for wrong clicks
+  const canvas = document.createElement('canvas');
+  canvas.width = 260; canvas.height = 260;
+  canvas.style.cssText = `
+    position:fixed; left:${x-130}px; top:${y-130}px;
+    pointer-events:none; z-index:79;
+  `;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const pts = Array.from({length:22}, () => ({
+    a: Math.random()*Math.PI*2,
+    v: 3.5 + Math.random()*5,
+    x: 130, y: 130,
+    r: 5 + Math.random()*6,
+    life: 1,
+    col: [hex, '#ffffff', '#facc15'][Math.floor(Math.random()*3)],
+  }));
+  let f = 0;
+  function burst() {
+    ctx.clearRect(0,0,260,260);
+    let any = false;
+    for (const p of pts) {
+      p.x += Math.cos(p.a)*p.v; p.y += Math.sin(p.a)*p.v;
+      p.v *= 0.9; p.life -= 0.045;
+      if (p.life <= 0) continue;
+      any = true;
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.col;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r*p.life, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (any && f++ < 55) requestAnimationFrame(burst);
+    else canvas.remove();
+  }
+  requestAnimationFrame(burst);
+}
+
+// keyframe for delta float
+const ks = document.createElement('style');
+ks.textContent = `@keyframes floatUp{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-160%) scale(1.4)}}`;
+document.head.appendChild(ks);
+
+// ══════════════════════════════════════════
+//  UI
+// ══════════════════════════════════════════
+function updateUI() {
+  scorePill.textContent = `⭐ ${score} / 15`;
+  progBar.style.width   = (score / 15 * 100) + '%';
+}
+
+// ══════════════════════════════════════════
+//  END
+// ══════════════════════════════════════════
+function endGame(won) {
+  active = false;
+  clearInterval(clockInterval);
+  stage.innerHTML = '';
+
+  document.getElementById('game-screen').style.display = 'none';
+  const es = document.getElementById('end-screen');
+  es.style.display = 'flex';
+  document.getElementById('end-icon').textContent  = won ? '🏆' : '😢';
+  document.getElementById('end-title').textContent = won ? WIN_MSG[lang] : LOSE_MSG[lang];
+  document.getElementById('end-score').textContent = `${SCORE_LBL[lang]}: ${score} / 15`;
+
+  if (won) confetti();
+}
+
+function confetti() {
+  const cols = COLORS.map(c=>c.hex);
+  for (let i = 0; i < 70; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      const col = cols[Math.floor(Math.random()*cols.length)];
+      el.style.cssText = `position:fixed;width:11px;height:11px;border-radius:3px;
+        background:${col};left:${Math.random()*100}vw;top:-20px;z-index:300;
+        pointer-events:none;animation:cfall ${1.8+Math.random()*2}s ease-in forwards`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),4000);
+    }, i * 45);
+  }
+}
+const cs2=document.createElement('style');
+cs2.textContent=`@keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(540deg);opacity:0}}`;
+document.head.appendChild(cs2);
+
+function restartGame() { startGame(lang); }
+function goLang() {
+  clearInterval(clockInterval);
+  active = false;
+  stage.innerHTML = '';
+  document.getElementById('end-screen').style.display  = 'none';
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('lang-screen').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function shuffle(a) {
+  for (let i=a.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+</script>
+</body>
+</html>
