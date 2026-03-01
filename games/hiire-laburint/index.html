@@ -239,14 +239,14 @@ body {
   pointer-events: none;
   z-index: 8;
   font-size: 2rem;
-  transform: translate(-50%, -130%);
-  animation: arrowBob 0.5s ease-in-out infinite alternate;
+  transform: translate(-50%, 0);
+  animation: arrowBobUp 0.5s ease-in-out infinite alternate;
   filter: drop-shadow(0 0 8px rgba(249,199,79,0.9));
   display: none;
 }
-@keyframes arrowBob {
-  from { transform: translate(-50%, -130%); }
-  to   { transform: translate(-50%, -100%); }
+@keyframes arrowBobUp {
+  from { transform: translate(-50%, 0px); }
+  to   { transform: translate(-50%, -8px); }
 }
 
 /* Flash overlay for wall hit */
@@ -262,11 +262,21 @@ body {
 }
 .flash.show { opacity: 1; }
 
+/* Bottom bar — timer + action buttons sit right under maze */
+#bottom-bar {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 0 10px;
+}
+
 /* Timer bar */
 .timer-wrap {
   width: 100%;
-  max-width: 560px;
-  margin: 6px 0 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -386,9 +396,11 @@ body {
   </div>
 </div>
 
-<div class="timer-wrap" id="timer-wrap" style="display:none;">
-  <span class="timer-label" id="timer-label">0s</span>
-  <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-fill" style="width:100%"></div></div>
+<div id="bottom-bar">
+  <div class="timer-wrap" id="timer-wrap" style="display:none;">
+    <span class="timer-label" id="timer-label">0s</span>
+    <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-fill" style="width:100%"></div></div>
+  </div>
 </div>
 
 <script>
@@ -400,37 +412,38 @@ const CELL = 28;
 
 // Build mazes as arrays of strings (W=wall, .=path, S=start, E=end, *=star)
 const MAZE_DEFS = [
-  // Level 1 — very simple L-shape
+  // Level 1 — START bottom edge, FINISH top-right area
   {
-    time: 30,
+    time: 35,
     grid: [
       "WWWWWWWWWWWWWWWWWWWW",
-      "WSSSS..............W",
-      "W....WWWWWWWWWWW...W",
-      "W....W.............W",
-      "WWWWWW.WWWWWWWWWWWWW",
-      "W......W...........W",
-      "W.WWWWWW.WWWWWWW...W",
-      "W.W......W.........W",
-      "W.W.WWWWWW.WWWWWW..W",
-      "W.W.W..............W",
-      "W.W.W.WWWWWWWWWWW..W",
-      "W.W.W.W............W",
-      "W...W.W.WWWWWWWWWWWW",
-      "WWW.W.W.W..........W",
-      "W...W.W.W..WWWWWW..W",
-      "W.WWW.W.W..W.......W",
-      "W.....W....W...EEEEW",
-      "WWWWWWWWWWWWWWWWWWWW",
+      "W......EEEEW........W",
+      "W.WWWWWWWWWW.WWWWW.W",
+      "W.W........W.W...W.W",
+      "W.W.WWWWWW.W.W.W.W.W",
+      "W.W.W......W...W.W.W",
+      "W.W.W.WWWWWWWWWW.W.W",
+      "W.W.W.W..........W.W",
+      "W.W.W.W.WWWWWWWWWW.W",
+      "W.W...W.W..........W",
+      "W.W.WWW.W.WWWWWWWW.W",
+      "W.W.W...W.W........W",
+      "W...W.WWW.W.WWWWWW.W",
+      "WWW.W.....W.W......W",
+      "W...WWWWWWW.W.WWWW.W",
+      "W...........W.W....W",
+      "WWWWWWWWWWWWW.W.WWWW",
+      "WWWWWWWWWWWWW.W.WWWW",
+      "WWWWWWWWWWWWWSSWWWWW",
     ],
-    stars: []  // will be auto-placed
+    stars: []
   },
-  // Level 2 — more corridors
+  // Level 2 — START bottom center, FINISH top-left
   {
-    time: 45,
+    time: 50,
     grid: [
       "WWWWWWWWWWWWWWWWWWWWWWWW",
-      "WSSW...................W",
+      "WEEW...................W",
       "W..W.WWWWWWWWWWWWWWW..W",
       "W..W.W.............W..W",
       "W..W.W.WWWWWWWWWW..W..W",
@@ -442,46 +455,45 @@ const MAZE_DEFS = [
       "W.W.WWWWWW.W.WWWWWWW..W",
       "W.W.W......W.W.........W",
       "W.W.W.WWWWWW.W.WWWWWWWW",
-      "W.W.W.W......W.W......EW",
+      "W.W.W.W......W.W.......W",
       "W.W.W.W.WWWWWW.W.WWWW.W",
-      "W...W.W.W......W......WW",
-      "WWW...W.W.WWWWWWWWWWWWW",
-      "W.WWWWW.W..............W",
-      "W.......WWWWWWWWWWWWWWWW",
+      "W...W.W.W......W.......W",
+      "WWW.W.W.W.WWWWWWWWWWWWW",
+      "W...WWW.W..............W",
+      "W.......WWWWWWWWWSWWWWWW",
     ],
     stars: []
   },
-  // Level 3 — complex
+  // Level 3 — START bottom-left gap, FINISH top-right
   {
-    time: 60,
+    time: 65,
     grid: [
       "WWWWWWWWWWWWWWWWWWWWWWWWWW",
-      "WSSW......................W",
-      "W..W.WWWWWWWWWWWWWWWWWW..W",
-      "W..W.W................W..W",
-      "W....W.WWWWWWWWWWWWW..W..W",
-      "WWWWWW.W...........W..W..W",
-      "W......W.WWWWWWWWW.W..W..W",
-      "W.WWWWWW.W.......W.W..W..W",
-      "W.W......W.WWWWW.W.W..W..W",
-      "W.W.WWWWWW.W...W.W.W..W..W",
-      "W.W.W......W.W.W.W.W..W..W",
-      "W.W.W.WWWWWW.W.W.W.W..W..W",
-      "W.W.W.W......W.W.W.W..W..W",
-      "W.W.W.W.WWWWWW.W.W.W..W..W",
-      "W.W.W.W.W......W.W.W..W..W",
-      "W...W.W.W.WWWWWW.W.W..W..W",
-      "WWW.W.W.W.W......W.W..W..W",
-      "W...W.W.W.W.WWWWWW.W..W..W",
-      "W.WWW.W.W.W.W......W..W..W",
-      "W.W...W.W.W.W.WWWWWW..W..W",
-      "W.W.WWW.W.W.W.W........W..W",
-      "W.W.W...W.W.W.W.WWWWWWWW.W",
-      "W...W.WWW.W.W.W...........W",
-      "WWW.W.....W.W.WWWWWWWWWWWW",
-      "W...WWWWWWW.W.............W",
-      "W...........WWWWWWWWWWWEEEW",
-      "WWWWWWWWWWWWWWWWWWWWWWWWWW",
+      "W........................EW",
+      "W.WWWWWWWWWWWWWWWWWWWWWW.W",
+      "W.W......................W.W",
+      "W.W.WWWWWWWWWWWWWWWWWW.W.W",
+      "W.W.W..................W.W.W",
+      "W.W.W.WWWWWWWWWWWWWW.WW.W.W",
+      "W.W.W.W................W.W.W",
+      "W.W.W.W.WWWWWWWWWWWWW..W.W.W",
+      "W.W.W.W.W..............W.W.W",
+      "W.W.W.W.W.WWWWWWWWWWW.W.W.W",
+      "W.W.W.W.W.W..........W.W.W.W",
+      "W.W.W.W.W.W.WWWWWWW.WW.W.W.W",
+      "W.W.W.W.W.W.W.......W..W.W.W",
+      "W.W.W.W.W.W.W.WWWWWWW.W.W.W",
+      "W.W.W.W.W.W.W.W........W.W.W",
+      "W...W.W.W.W.W.W.WWWWWWWW.W.W",
+      "WWW.W.W.W.W.W.W.W..........W",
+      "W...W.W.W.W.W.W.WWWWWWWWWWW",
+      "W.WWW.W.W.W.W.W............W",
+      "W.....W.W.W.W.WWWWWWWWWWWWW",
+      "WWWWWWW.W.W.W..............W",
+      "W.......W.W.WWWWWWWWWWWWWWW",
+      "W.WWWWWWW.W................W",
+      "W.........WWWWWWWWWWWWWWWWW",
+      "WSWWWWWWWWWWWWWWWWWWWWWWWWW",
     ],
     stars: []
   }
@@ -824,11 +836,13 @@ function showStartArrow() {
   const wrap = canvas.parentElement.getBoundingClientRect();
   const arrow = document.getElementById('start-arrow');
   const sc = mazeData.startCell;
-  // Position relative to game-wrap
   const x = rect.left - wrap.left + sc.c * CELL + CELL / 2;
-  const y = rect.top  - wrap.top  + sc.r * CELL + CELL;
+  // START is on bottom edge — arrow points UP from below canvas
+  const y = rect.bottom - wrap.top + 10;
   arrow.style.left = x + 'px';
   arrow.style.top  = y + 'px';
+  arrow.style.transform = 'translate(-50%, 0)';
+  arrow.textContent = '👆';
   arrow.style.display = 'block';
 }
 
@@ -841,31 +855,6 @@ function runCountdown(callback) {
   const numEl   = document.getElementById('countdown-number');
   overlay.classList.remove('hidden');
   showStartArrow();
-
-  // --- Animate fake cursor to START cell ---
-  if(mazeData.startCell) {
-    const rect = canvas.getBoundingClientRect();
-    const sc = mazeData.startCell;
-    const targetX = rect.left + sc.c * CELL + CELL / 2;
-    const targetY = rect.top  + sc.r * CELL + CELL / 2;
-
-    const fromX = cursorX;
-    const fromY = cursorY;
-    const duration = 700; // ms
-    const start = performance.now();
-
-    function animCursor(now) {
-      const t = Math.min((now - start) / duration, 1);
-      // ease-out cubic
-      const e = 1 - Math.pow(1 - t, 3);
-      cursorX = fromX + (targetX - fromX) * e;
-      cursorY = fromY + (targetY - fromY) * e;
-      cursorEl.style.left = cursorX + 'px';
-      cursorEl.style.top  = cursorY + 'px';
-      if(t < 1) requestAnimationFrame(animCursor);
-    }
-    requestAnimationFrame(animCursor);
-  }
 
   let count = 3;
   numEl.className = '';
