@@ -354,8 +354,9 @@ let timeLeft = 30;
 let clockInterval = null;
 let active = false;
 let targetColor = null;
-let balloonPool = []; // {id, el, colorId, raf, remove}
+let liveBalloons = new Map(); // id -> { el, colorId }
 let bId = 0;
+const WAVE_SIZE = 5;
 
 const stage      = document.getElementById('stage');
 const scorePill  = document.getElementById('score-pill');
@@ -382,6 +383,7 @@ function startGame(l) {
 
   wordHint.textContent = HINTS[lang];
   timerPill.className = 'timer-pill';
+  liveBalloons.clear();
   updateUI();
   nextTarget();
   spawnWave();
@@ -410,6 +412,16 @@ function nextTarget() {
   colorWord.style.animation = '';
   colorWord.textContent = targetColor[lang];
   colorWord.style.color = targetColor.hex;
+
+  // Guarantee target is on screen: if not present, swap a random non-target balloon
+  const hasTarget = [...liveBalloons.values()].some(b => b.colorId === targetColor.id);
+  if (!hasTarget) {
+    const candidates = [...liveBalloons.entries()].filter(([,b]) => b.colorId !== targetColor.id);
+    if (candidates.length > 0) {
+      const [victimId, victim] = candidates[Math.floor(Math.random() * candidates.length)];
+      morphBalloon(victimId, victim.el, targetColor);
+    }
+  }
 }
 
 // ══════════════════════════════════════════
@@ -417,28 +429,26 @@ function nextTarget() {
 // ══════════════════════════════════════════
 function spawnWave() {
   if (!active) return;
-  // Pick 4 distinct colors always including target
+  // Pick 5 distinct colors always including target
   const rest = COLORS.filter(c => c.id !== targetColor.id);
   shuffle(rest);
-  const four = [targetColor, rest[0], rest[1], rest[2]];
-  shuffle(four);
+  const five = [targetColor, rest[0], rest[1], rest[2], rest[3]];
+  shuffle(five);
 
   const W = window.innerWidth;
-  // Space evenly across width with some randomness
-  const slots = [0.12, 0.37, 0.63, 0.88];
+  const slots = [0.10, 0.28, 0.50, 0.72, 0.90];
   shuffle(slots);
 
-  four.forEach((color, i) => {
-    const x = slots[i] * W;
-    addBalloon(color, x);
+  five.forEach((color, i) => {
+    addBalloon(color, slots[i] * W);
   });
 }
 
 function addBalloon(color, x) {
   if (!active) return;
   const id = bId++;
-  const SIZE = 90 + Math.random() * 30; // balloon width px
-  const duration = 20 + Math.random() * 12; // seconds to cross screen
+  const SIZE = 90 + Math.random() * 30;
+  const duration = 20 + Math.random() * 12;
   const swayAmp  = 18 + Math.random() * 22;
   const swayFreq = 0.6 + Math.random() * 0.8;
   const startBottom = -(SIZE * 1.4 + 20);
@@ -456,6 +466,7 @@ function addBalloon(color, x) {
   `;
   el.innerHTML = makeBalloonSVG(color.hex, SIZE);
   stage.appendChild(el);
+  liveBalloons.set(id, { el, colorId: color.id });
 
   el.addEventListener('click', () => onBalloonClick(id, color, el));
   el.addEventListener('mouseenter', () => { el.style.filter = 'brightness(1.25) drop-shadow(0 0 20px ' + color.hex + ')'; });
@@ -470,8 +481,8 @@ function addBalloon(color, x) {
     const frac = t / duration;
     if (frac >= 1) {
       el.remove();
+      liveBalloons.delete(id);
       if (active) {
-        // Replace with a balloon that might be target color
         const candidates = [targetColor, targetColor, ...COLORS.filter(c=>c.id!==targetColor.id)];
         const pick = candidates[Math.floor(Math.random()*candidates.length)];
         const newX = Math.random() * 0.76 * window.innerWidth + 0.12 * window.innerWidth;
@@ -486,6 +497,24 @@ function addBalloon(color, x) {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+}
+
+// Swap a live balloon's color in-place (flash effect)
+function morphBalloon(id, el, newColor) {
+  const SIZE = parseInt(el.querySelector('svg').getAttribute('width'));
+  el.style.transition = 'filter 0.2s';
+  el.style.filter = 'brightness(2) blur(3px)';
+  // Update click handler by replacing element content and re-registering
+  setTimeout(() => {
+    if (!document.contains(el)) return;
+    el.innerHTML = makeBalloonSVG(newColor.hex, SIZE);
+    el.style.filter = '';
+    liveBalloons.set(id, { el, colorId: newColor.id });
+    // Re-register click with new color
+    el.onclick = () => onBalloonClick(id, newColor, el);
+    el.onmouseenter = () => { el.style.filter = 'brightness(1.25) drop-shadow(0 0 20px ' + newColor.hex + ')'; };
+    el.onmouseleave = () => { el.style.filter = ''; };
+  }, 180);
 }
 
 // ══════════════════════════════════════════
@@ -549,10 +578,11 @@ function onBalloonClick(id, color, el) {
     score = Math.min(15, score + 1);
     popEffect(cx, cy, color.hex, true);
     el.remove();
+    liveBalloons.delete(id);
     updateUI();
     if (score >= 15) { endGame(true); return; }
     nextTarget();
-    // Always keep 4 balloons — spawn replacement
+    // Spawn replacement
     setTimeout(() => {
       if (active) {
         const newX = Math.random() * 0.76 * window.innerWidth + 0.12 * window.innerWidth;
@@ -655,6 +685,7 @@ function endGame(won) {
   active = false;
   clearInterval(clockInterval);
   stage.innerHTML = '';
+  liveBalloons.clear();
 
   document.getElementById('game-screen').style.display = 'none';
   const es = document.getElementById('end-screen');
@@ -689,6 +720,7 @@ function goLang() {
   clearInterval(clockInterval);
   active = false;
   stage.innerHTML = '';
+  liveBalloons.clear();
   document.getElementById('end-screen').style.display  = 'none';
   document.getElementById('game-screen').style.display = 'none';
   document.getElementById('lang-screen').style.display = 'flex';
