@@ -595,14 +595,17 @@ function buildKeyboard(containerId, highlightKeys=[], targetKey=null){
       if(targetKey && k===targetKey.toLowerCase()) el.classList.add('target');
       rowEl.appendChild(el);
     });
-    if(row===ROWS[2]){
-      const sp=document.createElement('div');
-      sp.className='key space'; sp.textContent='TÜHIK';
-      sp.id='key-'+containerId+'-space';
-      rowEl.appendChild(sp);
-    }
     c.appendChild(rowEl);
   });
+
+  // Row 4: spacebar only
+  const spaceRow = document.createElement('div');
+  spaceRow.className='kbd-row';
+  const sp=document.createElement('div');
+  sp.className='key space'; sp.textContent='TÜHIK';
+  sp.id='key-'+containerId+'-space';
+  spaceRow.appendChild(sp);
+  c.appendChild(spaceRow);
 }
 
 function flashKey(containerId, key, cls){
