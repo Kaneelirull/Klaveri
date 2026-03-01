@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klaviatuuri Kangelane! 🎮</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0f0c29;
+    --card: #1a1640;
+    --accent1: #ff6b6b;
+    --accent2: #ffd93d;
+    --accent3: #6bcb77;
+    --accent4: #4d96ff;
+    --text: #fff;
+    --glow: 0 0 20px rgba(255,210,61,0.5);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 10% 20%, rgba(77,150,255,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 80%, rgba(255,107,107,0.15) 0%, transparent 50%);
+  }
+
+  /* Stars */
+  .stars { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+  .star { position:absolute; background:#fff; border-radius:50%; animation: twinkle 3s infinite; }
+
+  @keyframes twinkle {
+    0%,100% { opacity:0.2; transform:scale(1); }
+    50% { opacity:1; transform:scale(1.5); }
+  }
+
+  .container { position:relative; z-index:1; max-width:960px; margin:0 auto; padding:20px; }
+
+  /* Header */
+  .header { text-align:center; padding:20px 0 10px; }
+  .logo { font-family:'Fredoka One', cursive; font-size:3rem; color:var(--accent2);
+    text-shadow: 0 0 30px rgba(255,210,61,0.8), 0 4px 0 rgba(0,0,0,0.5);
+    animation: logoFloat 3s ease-in-out infinite; }
+  @keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  .subtitle { color:rgba(255,255,255,0.7); font-size:1rem; margin-top:4px; }
+
+  /* Progress bar */
+  .progress-wrap { display:flex; align-items:center; gap:12px; margin:16px 0; }
+  .progress-label { font-size:0.85rem; color:var(--accent2); font-weight:700; white-space:nowrap; }
+  .progress-bar { flex:1; height:12px; background:rgba(255,255,255,0.1); border-radius:10px; overflow:hidden; }
+  .progress-fill { height:100%; background: linear-gradient(90deg, var(--accent4), var(--accent2));
+    border-radius:10px; transition: width 0.5s ease; box-shadow: 0 0 10px rgba(255,210,61,0.6); }
+  .score-badge { font-family:'Fredoka One'; font-size:1.2rem; color:var(--accent3);
+    background:rgba(107,203,119,0.15); border:2px solid var(--accent3);
+    padding:4px 14px; border-radius:20px; white-space:nowrap;
+    text-shadow: 0 0 10px var(--accent3); }
+
+  /* Screen sections */
+  .screen { display:none; animation: fadeIn 0.5s ease; }
+  .screen.active { display:block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border-radius:24px;
+    padding:28px;
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    margin-bottom:20px;
+  }
+
+  .level-badge {
+    display:inline-block;
+    font-family:'Fredoka One';
+    font-size:0.9rem;
+    padding:4px 16px;
+    border-radius:20px;
+    margin-bottom:12px;
+  }
+  .lv1 { background:rgba(255,107,107,0.2); color:var(--accent1); border:1px solid var(--accent1); }
+  .lv2 { background:rgba(77,150,255,0.2); color:var(--accent4); border:1px solid var(--accent4); }
+  .lv3 { background:rgba(107,203,119,0.2); color:var(--accent3); border:1px solid var(--accent3); }
+
+  .card h2 { font-family:'Fredoka One'; font-size:1.8rem; color:var(--accent2); margin-bottom:8px; }
+  .card p { color:rgba(255,255,255,0.75); line-height:1.6; }
+
+  /* Keyboard diagram */
+  .keyboard-demo { margin:20px 0; }
+  .kbd-row { display:flex; justify-content:center; gap:6px; margin-bottom:6px; }
+  .key {
+    display:flex; align-items:center; justify-content:center;
+    width:44px; height:44px;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius:8px;
+    font-family:'Fredoka One';
+    font-size:0.95rem;
+    color:rgba(255,255,255,0.6);
+    position:relative;
+    transition: all 0.2s;
+    cursor:default;
+    user-select:none;
+  }
+  .key.space { width:220px; font-size:0.7rem; color:rgba(255,255,255,0.4); }
+  .key.left-hand { background:rgba(255,107,107,0.2); border-color:var(--accent1); color:var(--accent1); }
+  .key.right-hand { background:rgba(77,150,255,0.2); border-color:var(--accent4); color:var(--accent4); }
+  .key.home { border-width:3px; }
+  .key.home::after { content:'•'; position:absolute; bottom:3px; font-size:0.5rem; }
+  .key.target {
+    background: linear-gradient(135deg, var(--accent2), #ff9f43);
+    border-color:var(--accent2);
+    color:#1a1640;
+    transform:scale(1.15);
+    box-shadow: 0 0 25px rgba(255,210,61,0.9);
+    animation: pulse-key 0.4s ease-in-out infinite alternate;
+  }
+  @keyframes pulse-key {
+    from { box-shadow: 0 0 15px rgba(255,210,61,0.6); transform:scale(1.1); }
+    to   { box-shadow: 0 0 30px rgba(255,210,61,1.0); transform:scale(1.2); }
+  }
+  .key.correct-flash {
+    background: linear-gradient(135deg, var(--accent3), #00d2a0) !important;
+    border-color:var(--accent3) !important;
+    color:#fff !important;
+    box-shadow: 0 0 30px rgba(107,203,119,1) !important;
+    transform:scale(1.3) !important;
+    transition:all 0.1s;
+  }
+  .key.wrong-flash {
+    background:rgba(255,50,50,0.8) !important;
+    border-color:#ff3232 !important;
+    animation: shake 0.3s;
+  }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-6px)}
+    75%{transform:translateX(6px)}
+  }
+
+  /* Finger guide */
+  .finger-guide { display:flex; gap:16px; justify-content:center; margin:16px 0; flex-wrap:wrap; }
+  .finger-item { display:flex; align-items:center; gap:6px; font-size:0.85rem; }
+  .finger-dot { width:14px; height:14px; border-radius:50%; }
+  .fd-left { background:var(--accent1); }
+  .fd-right { background:var(--accent4); }
+
+  /* Typing area */
+  .typing-area { text-align:center; margin:20px 0; }
+
+  .challenge-word {
+    font-family:'Fredoka One';
+    font-size:3rem;
+    letter-spacing:0.15em;
+    margin-bottom:16px;
+    min-height:4rem;
+    word-break:break-all;
+  }
+
+  .char-pending { color:rgba(255,255,255,0.25); }
+  .char-current {
+    color:var(--accent2);
+    border-bottom:3px solid var(--accent2);
+    text-shadow: 0 0 20px var(--accent2);
+    animation: blink 0.7s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .char-correct { color:var(--accent3); text-shadow: 0 0 10px var(--accent3); }
+  .char-wrong { color:var(--accent1); background:rgba(255,107,107,0.2); border-radius:4px; }
+
+  .timer-bar-wrap { margin:10px auto; max-width:400px; }
+  .timer-label { font-size:0.85rem; color:rgba(255,255,255,0.5); margin-bottom:4px; }
+  .timer-bar { height:8px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden; }
+  .timer-fill { height:100%; border-radius:6px; transition:width 0.1s linear;
+    background: linear-gradient(90deg, var(--accent3), var(--accent2)); }
+
+  /* Instruction hint */
+  .hint-box {
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px;
+    padding:14px 20px;
+    text-align:center;
+    font-size:0.95rem;
+    color:rgba(255,255,255,0.7);
+    margin:14px 0;
+  }
+  .hint-box strong { color:var(--accent2); }
+
+  /* Story text */
+  .story-text {
+    font-size:1.1rem;
+    line-height:1.8;
+    letter-spacing:0.03em;
+    word-break:break-word;
+  }
+
+  /* Buttons */
+  .btn {
+    display:inline-block;
+    font-family:'Fredoka One';
+    font-size:1.2rem;
+    padding:12px 32px;
+    border-radius:50px;
+    border:none;
+    cursor:pointer;
+    transition:all 0.2s;
+    text-decoration:none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent2), #ff9f43);
+    color:#1a1640;
+    box-shadow: 0 4px 20px rgba(255,210,61,0.5);
+  }
+  .btn-primary:hover { transform:translateY(-3px); box-shadow: 0 8px 30px rgba(255,210,61,0.7); }
+  .btn-secondary {
+    background:rgba(255,255,255,0.1);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.2);
+  }
+  .btn-secondary:hover { background:rgba(255,255,255,0.2); }
+
+  .btn-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px; }
+
+  /* Feedback popups */
+  .feedback {
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0);
+    font-family:'Fredoka One'; font-size:4rem;
+    z-index:100; pointer-events:none;
+    transition: transform 0.2s, opacity 0.3s;
+    text-shadow: 0 0 40px currentColor;
+  }
+  .feedback.show { transform:translate(-50%,-50%) scale(1); }
+  .feedback.hide { transform:translate(-50%,-50%) scale(0); opacity:0; }
+  .feedback.good { color:var(--accent3); }
+  .feedback.bad { color:var(--accent1); }
+
+  /* Confetti */
+  .confetti-piece {
+    position:fixed; width:10px; height:10px; border-radius:2px;
+    pointer-events:none; z-index:200;
+    animation: confettiFall 2s forwards ease-in;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity:1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity:0; }
+  }
+
+  /* Stats */
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin:16px 0; }
+  .stat-item { background:rgba(255,255,255,0.05); border-radius:16px; padding:16px; text-align:center; }
+  .stat-value { font-family:'Fredoka One'; font-size:2rem; color:var(--accent2); }
+  .stat-label { font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:4px; }
+
+  /* Hands illustration */
+  .hands-illus { display:flex; justify-content:center; gap:30px; margin:20px 0; font-size:3rem; }
+  .hand-box { text-align:center; }
+  .hand-box p { font-size:0.85rem; margin-top:6px; font-weight:700; }
+  .hand-left p { color:var(--accent1); }
+  .hand-right p { color:var(--accent4); }
+
+  /* Level select */
+  .level-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin:20px 0; }
+  .level-card {
+    background:var(--card); border-radius:20px; padding:22px;
+    border:2px solid transparent; cursor:pointer; transition:all 0.3s;
+    text-align:center;
+  }
+  .level-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,0.3); }
+  .lc1 { border-color:var(--accent1); }
+  .lc2 { border-color:var(--accent4); }
+  .lc3 { border-color:var(--accent3); }
+  .lc1:hover { background:rgba(255,107,107,0.1); box-shadow: 0 12px 40px rgba(255,107,107,0.3); }
+  .lc2:hover { background:rgba(77,150,255,0.1); box-shadow: 0 12px 40px rgba(77,150,255,0.3); }
+  .lc3:hover { background:rgba(107,203,119,0.1); box-shadow: 0 12px 40px rgba(107,203,119,0.3); }
+  .level-card .icon { font-size:3rem; margin-bottom:10px; }
+  .level-card h3 { font-family:'Fredoka One'; font-size:1.3rem; }
+  .level-card p { font-size:0.85rem; color:rgba(255,255,255,0.6); margin-top:6px; }
+
+  .locked { opacity:0.4; cursor:not-allowed; }
+  .locked:hover { transform:none; box-shadow:none; background:var(--card); }
+
+  /* WPM display */
+  .wpm-live { font-family:'Fredoka One'; font-size:1rem; color:rgba(255,255,255,0.4); }
+
+  /* Next char hint */
+  .next-hint { font-size:0.9rem; color:rgba(255,255,255,0.5); margin-top:8px; }
+  .next-hint .nh-key {
+    display:inline-block; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3);
+    border-radius:6px; padding:1px 8px; font-family:'Fredoka One'; color:var(--accent2);
+    font-size:1rem;
+  }
+  .next-hint .nh-hand {
+    font-weight:700;
+  }
+  .nh-left { color:var(--accent1); }
+  .nh-right { color:var(--accent4); }
+
+  /* responsive */
+  @media(max-width:600px) {
+    .logo { font-size:2rem; }
+    .key { width:32px; height:32px; font-size:0.75rem; }
+    .key.space { width:140px; }
+    .challenge-word { font-size:2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="feedback" id="feedback"></div>
+
+<div class="container">
+  <div class="header">
+    <div class="logo">⌨️ Klaviatuuri Kangelane!</div>
+    <div class="subtitle">Õpi trükkima nagu professionaal 🚀</div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">Tase <span id="level-num">1</span>/3</div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:33%"></div></div>
+    <div class="score-badge">⭐ <span id="total-score">0</span></div>
+  </div>
+
+  <!-- SCREEN: Home -->
+  <div class="screen active" id="screen-home">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:5rem; margin-bottom:10px;">🎮</div>
+      <h2 style="font-size:2.5rem;">Tere tulemast!</h2>
+      <p style="margin:12px 0 20px;">Siin õpid trükkima klaviatuuril. Kolm põnevat taset ootavad sind!</p>
+      <div class="hands-illus">
+        <div class="hand-box hand-left">
+          <div>🤚</div>
+          <p>Vasak käsi</p>
+        </div>
+        <div class="hand-box hand-right">
+          <div>🖐️</div>
+          <p>Parem käsi</p>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="showLevels()">Alusta mängu! 🚀</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Level Select -->
+  <div class="screen" id="screen-levels">
+    <div class="card">
+      <h2>Vali tase</h2>
+      <p>Iga tase on põnevam kui eelmine!</p>
+      <div class="level-cards">
+        <div class="level-card lc1" onclick="startLevel(1)">
+          <div class="icon">🔴</div>
+          <h3 style="color:var(--accent1)">Tase 1</h3>
+          <p>F ja J tähed – näpud algkohale!</p>
+        </div>
+        <div class="level-card lc2" id="lc2" onclick="startLevel(2)">
+          <div class="icon">🔵</div>
+          <h3 style="color:var(--accent4)">Tase 2</h3>
+          <p>Rohkem tähti – D, K, S, L</p>
+        </div>
+        <div class="level-card lc3" id="lc3" onclick="startLevel(3)">
+          <div class="icon">🟢</div>
+          <h3 style="color:var(--accent3)">Tase 3</h3>
+          <p>Hiireke ja arvuti – lugu kirjutada!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Finger Intro -->
+  <div class="screen" id="screen-intro">
+    <div class="card">
+      <div class="level-badge lv1" id="intro-badge">Tase 1</div>
+      <h2 id="intro-title">Algkoht</h2>
+      <p id="intro-desc">Pane sõrmed õigele kohale!</p>
+
+      <div class="keyboard-demo" id="kbd-intro"></div>
+
+      <div class="hint-box" id="intro-hint">
+        Punane = <strong>vasak käsi</strong> &nbsp;|&nbsp; Sinine = <strong>parem käsi</strong><br>
+        Tähtel <strong>F</strong> ja <strong>J</strong> on väikesed muhkud – need on algkohad!
+      </div>
+
+      <div class="finger-guide">
+        <div class="finger-item"><div class="finger-dot fd-left"></div> Vasak käsi</div>
+        <div class="finger-item"><div class="finger-dot fd-right"></div> Parem käsi</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="showLevels()">Tagasi</button>
+        <button class="btn btn-primary" id="start-btn" onclick="startTyping()">Alusta! ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Typing -->
+  <div class="screen" id="screen-type">
+    <div class="card">
+      <div class="level-badge" id="type-badge">Tase 1</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+        <div class="wpm-live" id="wpm-display">⌚ 0 wpm</div>
+        <div style="font-family:'Fredoka One'; color:var(--accent2);">Vead: <span id="err-count">0</span> ❌</div>
+      </div>
+
+      <div class="timer-bar-wrap">
+        <div class="timer-label" id="timer-label">⏱ 0s</div>
+        <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+      </div>
+
+      <div class="typing-area">
+        <div class="challenge-word" id="challenge-word"></div>
+        <div class="next-hint" id="next-hint"></div>
+      </div>
+
+      <div class="keyboard-demo" id="kbd-type"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Level Complete -->
+  <div class="screen" id="screen-complete">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:4rem;" id="complete-emoji">🎉</div>
+      <h2 id="complete-title">Tubli!</h2>
+      <p id="complete-msg">Sa tegid suurepäraselt!</p>
+
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="showLevels()">Tasemed</button>
+        <button class="btn btn-primary" id="next-level-btn" onclick="nextLevel()">Järgmine tase! ➡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: All Done -->
+  <div class="screen" id="screen-done">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:5rem;">🏆</div>
+      <h2>Klaviatuuri Kangelane!</h2>
+      <p style="font-size:1.1rem; margin:12px 0;">Sa läbisid kõik kolm taset! Oled nüüd tõeline trükkimise meister!</p>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-value" id="final-score"></div><div class="stat-label">Punktid kokku</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="restartAll()">Mängi uuesti! 🔄</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== CONFIG ======
+const HAND = {
+  'q':'left','w':'left','e':'left','r':'left','t':'left',
+  'y':'right','u':'right','i':'right','o':'right','p':'right',
+  'a':'left','s':'left','d':'left','f':'left','g':'left',
+  'h':'right','j':'right','k':'right','l':'right','ö':'right','ä':'right',
+  'z':'left','x':'left','c':'left','v':'left','b':'left',
+  'n':'right','m':'right',',':'right','.':'right',
+  ' ':'both'
+};
+
+const FINGER_NAME = {
+  'f':'nimetissõrm','j':'nimetissõrm',
+  'd':'kesksõrm','k':'kesksõrm',
+  's':'sõrmusesõrm','l':'sõrmusesõrm',
+  'a':'väike sõrm','ö':'väike sõrm',
+  'r':'sõrmusesõrm','u':'sõrmusesõrm'
+};
+
+// Key rows
+const ROWS = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l','ö','ä'],
+  ['z','x','c','v','b','n','m']
+];
+const HOME_KEYS = new Set(['a','s','d','f','j','k','l','ö']);
+
+const LEVEL_CONFIG = {
+  1: {
+    keys: ['f','j'],
+    title: 'F ja J',
+    desc: 'Algkoht! Pane pöidlad tühikule, nimetissõrmed F ja J peale.',
+    badge: 'Tase 1',
+    badgeClass: 'lv1',
+    color: 'var(--accent1)',
+    genLength: 30,
+    timeLimit: 90
+  },
+  2: {
+    keys: ['f','j','d','k','s','l'],
+    title: 'Rohkem sõrmi!',
+    desc: 'Lisame D, K, S, L. Hoia käed algkohal!',
+    badge: 'Tase 2',
+    badgeClass: 'lv2',
+    color: 'var(--accent4)',
+    genLength: 40,
+    timeLimit: 120
+  },
+  3: {
+    keys: null, // story mode
+    title: 'Hiireke lugu',
+    desc: 'Kirjuta Hiireke lugu! Võta aega ja ole täpne.',
+    badge: 'Tase 3',
+    badgeClass: 'lv3',
+    color: 'var(--accent3)',
+    genLength: null,
+    timeLimit: null // no limit
+  }
+};
+
+const STORY = `Hiireke elas väikeses majas suure tamme all. Ühel päeval sai ta endale uue arvuti. See oli väike ja hall, just paras hiirekäppadele. Hiireke pani arvuti lauale ja vajutas nuppu. Ekraan läks siniseks ja ilmus rõõmus tervitus.\nHiireke õppis joonistama värvilisi pilte. Ta tegi pildi juustust, päikesest ja oma sõbrast Oravast. Siis kirjutas ta lühikese kirja: Tere, sõber.\nOrav tuli külla ja nad vaatasid koos pilte. Nad naersid ja plaksutasid. Hiireke lubas, et kasutab arvutit targalt. Pärast mängu läksid nad õue päriselt jooksma. Arvuti ootas rahulikult laual.`;
+
+// ====== STATE ======
+let currentLevel = 1;
+let unlockedLevel = 1;
+let totalScore = 0;
+let levelScores = {};
+
+let challengeText = '';
+let currentIndex = 0;
+let errors = 0;
+let startTime = null;
+let timerInterval = null;
+let timeLimit = 90;
+let elapsedSeconds = 0;
+let keyHandler = null;
+
+// ====== INIT ======
+function initStars() {
+  const s = document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const star = document.createElement('div');
+    star.className='star';
+    const size = Math.random()*3+1;
+    star.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*4}s;animation-duration:${2+Math.random()*3}s;`;
+    s.appendChild(star);
+  }
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showLevels(){
+  stopTimer();
+  updateLevelCards();
+  showScreen('screen-levels');
+}
+
+function updateLevelCards(){
+  document.getElementById('level-num').textContent = currentLevel;
+  const pct = (currentLevel/3)*100;
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('total-score').textContent = totalScore;
+
+  ['2','3'].forEach(n=>{
+    const el = document.getElementById('lc'+n);
+    if(parseInt(n) > unlockedLevel){
+      el.classList.add('locked');
+    } else {
+      el.classList.remove('locked');
+    }
+  });
+}
+
+function showLevels_from_home(){ showLevels(); }
+window.showLevels = showLevels;
+
+// ====== BUILD KEYBOARD ======
+function buildKeyboard(containerId, highlightKeys=[], targetKey=null){
+  const c = document.getElementById(containerId);
+  c.innerHTML='';
+
+  ROWS.forEach(row=>{
+    const rowEl = document.createElement('div');
+    rowEl.className='kbd-row';
+    row.forEach(k=>{
+      const el = document.createElement('div');
+      el.className='key';
+      el.id='key-'+containerId+'-'+k;
+      el.textContent=k.toUpperCase();
+      if(HOME_KEYS.has(k)) el.classList.add('home');
+      if(highlightKeys.includes(k)){
+        el.classList.add(HAND[k]==='left'?'left-hand':'right-hand');
+      }
+      if(targetKey && k===targetKey.toLowerCase()) el.classList.add('target');
+      rowEl.appendChild(el);
+    });
+    if(row===ROWS[2]){
+      const sp=document.createElement('div');
+      sp.className='key space'; sp.textContent='TÜHIK';
+      sp.id='key-'+containerId+'-space';
+      rowEl.appendChild(sp);
+    }
+    c.appendChild(rowEl);
+  });
+}
+
+function flashKey(containerId, key, cls){
+  const kId = key===' '?'space':key.toLowerCase();
+  const el = document.getElementById('key-'+containerId+'-'+kId);
+  if(!el) return;
+  el.classList.add(cls);
+  setTimeout(()=>el.classList.remove(cls), 300);
+}
+
+function setTargetKey(containerId, key){
+  document.querySelectorAll(`#${containerId} .key`).forEach(k=>k.classList.remove('target'));
+  if(!key) return;
+  const kId = key===' '?'space':key.toLowerCase();
+  const el = document.getElementById('key-'+containerId+'-'+kId);
+  if(el) el.classList.add('target');
+}
+
+// ====== LEVEL START ======
+function startLevel(n){
+  if(n>unlockedLevel){ showFeedback('🔒',false); return; }
+  currentLevel = n;
+  const cfg = LEVEL_CONFIG[n];
+
+  const badge = document.getElementById('intro-badge');
+  badge.textContent=cfg.badge; badge.className='level-badge '+cfg.badgeClass;
+  document.getElementById('intro-title').textContent=cfg.title;
+  document.getElementById('intro-desc').textContent=cfg.desc;
+
+  const highlightKeys = cfg.keys || [...'abcdefghijklmnopqrstuvwxyz'];
+  buildKeyboard('kbd-intro', highlightKeys);
+
+  if(n===3){
+    document.getElementById('intro-hint').innerHTML =
+      '📖 Kirjuta Hiireke lugu täpselt, nagu ekraanil näed. Iga kirjavahemärk loeb!';
+  } else {
+    document.getElementById('intro-hint').innerHTML =
+      `Punane = <strong>vasak käsi</strong> &nbsp;|&nbsp; Sinine = <strong>parem käsi</strong><br>Pane <strong>${cfg.keys.map(k=>k.toUpperCase()).join(', ')}</strong> sõrmed valmis!`;
+  }
+
+  showScreen('screen-intro');
+}
+
+function genChallenge(keys, length){
+  let s='';
+  for(let i=0;i<length;i++){
+    if(i>0 && i%6===0) s+=' ';
+    s+=keys[Math.floor(Math.random()*keys.length)];
+  }
+  return s;
+}
+
+function startTyping(){
+  const cfg = LEVEL_CONFIG[currentLevel];
+  challengeText = currentLevel===3 ? STORY : genChallenge(cfg.keys, cfg.genLength);
+  currentIndex=0; errors=0; startTime=null; elapsedSeconds=0;
+  timeLimit = cfg.timeLimit;
+
+  const badge = document.getElementById('type-badge');
+  badge.textContent=cfg.badge; badge.className='level-badge '+cfg.badgeClass;
+
+  const highlightKeys = cfg.keys || [...'abcdefghijklmnopqrstuvwxyz'];
+  buildKeyboard('kbd-type', highlightKeys);
+
+  renderChallenge();
+  updateNextHint();
+  setTargetKey('kbd-type', challengeText[0]);
+
+  if(timerInterval) clearInterval(timerInterval);
+  document.getElementById('timer-fill').style.width='100%';
+  document.getElementById('timer-label').textContent='⏱ 0s';
+  document.getElementById('err-count').textContent='0';
+  document.getElementById('wpm-display').textContent='⌚ 0 wpm';
+
+  showScreen('screen-type');
+
+  if(keyHandler) document.removeEventListener('keydown', keyHandler);
+  keyHandler = handleKey;
+  document.addEventListener('keydown', keyHandler);
+}
+
+function renderChallenge(){
+  const el = document.getElementById('challenge-word');
+  let html='';
+  for(let i=0;i<challengeText.length;i++){
+    const ch = challengeText[i]==='\n'?' ':challengeText[i];
+    if(i<currentIndex){
+      html+=`<span class="char-correct">${ch==' '?'&nbsp;':ch}</span>`;
+    } else if(i===currentIndex){
+      html+=`<span class="char-current">${ch==' '?'&nbsp;':ch}</span>`;
+    } else {
+      html+=`<span class="char-pending">${ch==' '?'&nbsp;':ch}</span>`;
+    }
+  }
+  el.innerHTML=html;
+  const cur = el.querySelector('.char-current');
+  if(cur) cur.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+
+function updateNextHint(){
+  const el = document.getElementById('next-hint');
+  if(currentIndex>=challengeText.length){ el.innerHTML=''; return; }
+  const ch = challengeText[currentIndex].toLowerCase();
+  if(ch==='\n'){ el.innerHTML='↵ vajuta tühikut'; return; }
+  const hand = HAND[ch];
+  if(!hand){ el.innerHTML=''; return; }
+  const handLabel = hand==='left'?`<span class="nh-left nh-hand">vasak käsi 🤚</span>`:
+                    hand==='right'?`<span class="nh-right nh-hand">parem käsi 🖐️</span>`:
+                    `<span class="nh-hand">pöial 👍</span>`;
+  const dispKey = ch===' '?'TÜHIK':ch.toUpperCase();
+  el.innerHTML=`Vajuta <span class="nh-key">${dispKey}</span> – ${handLabel}`;
+}
+
+function handleKey(e){
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  if(currentIndex>=challengeText.length) return;
+
+  const expected = challengeText[currentIndex];
+  const pressed = e.key;
+  const effectiveExpected = expected==='\n'?' ':expected;
+
+  if(!startTime){ startTime=Date.now(); startTimerDisplay(); }
+
+  if(pressed===effectiveExpected||(effectiveExpected===' '&&pressed===' ')){
+    e.preventDefault();
+    flashKey('kbd-type', effectiveExpected, 'correct-flash');
+    currentIndex++;
+    renderChallenge();
+    updateNextHint();
+    setTargetKey('kbd-type', currentIndex<challengeText.length?challengeText[currentIndex]:null);
+    updateWPM();
+    if(currentIndex>=challengeText.length){ finishLevel(); }
+  } else if(pressed.length===1 || pressed==='Backspace'){
+    e.preventDefault();
+    errors++;
+    document.getElementById('err-count').textContent=errors;
+    flashKey('kbd-type', effectiveExpected, 'wrong-flash');
+    showFeedback('❌',false);
+  }
+}
+
+function startTimerDisplay(){
+  timerInterval = setInterval(()=>{
+    elapsedSeconds = Math.round((Date.now()-startTime)/1000);
+    document.getElementById('timer-label').textContent=`⏱ ${elapsedSeconds}s`;
+    if(timeLimit){
+      const pct = Math.max(0, (1 - elapsedSeconds/timeLimit))*100;
+      document.getElementById('timer-fill').style.width=pct+'%';
+      document.getElementById('timer-fill').style.background =
+        pct>40 ? 'linear-gradient(90deg,var(--accent3),var(--accent2))':
+                 'linear-gradient(90deg,var(--accent1),#ff9f43)';
+      if(elapsedSeconds>=timeLimit && currentLevel!==3){ finishLevel(true); }
+    }
+    updateWPM();
+  },500);
+}
+
+function stopTimer(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+  if(keyHandler){ document.removeEventListener('keydown',keyHandler); keyHandler=null; }
+}
+
+function updateWPM(){
+  if(!startTime) return;
+  const mins=(Date.now()-startTime)/60000;
+  if(mins<0.01) return;
+  const words=currentIndex/5;
+  const wpm=Math.round(words/mins);
+  document.getElementById('wpm-display').textContent=`⌚ ${wpm} wpm`;
+}
+
+function calcScore(){
+  const cfg=LEVEL_CONFIG[currentLevel];
+  const accuracy = Math.max(0, 1-(errors/Math.max(1,challengeText.length)));
+  const timeBonus = cfg.timeLimit ? Math.max(0, cfg.timeLimit-elapsedSeconds) : 0;
+  const base = Math.round(accuracy*500);
+  return base + timeBonus*2;
+}
+
+function finishLevel(timedOut=false){
+  stopTimer();
+  const score = calcScore();
+  levelScores[currentLevel]=score;
+  totalScore+=score;
+  document.getElementById('total-score').textContent=totalScore;
+
+  if(currentLevel===unlockedLevel && unlockedLevel<3) unlockedLevel++;
+
+  const accuracy=Math.round(Math.max(0,(1-errors/Math.max(1,challengeText.length)))*100);
+
+  document.getElementById('complete-emoji').textContent = timedOut?'⏰':score>400?'🏆':score>200?'🎉':'😊';
+  document.getElementById('complete-title').textContent = timedOut?'Aeg sai läbi!':score>400?'Fantastiline!':'Tubli töö!';
+  document.getElementById('complete-msg').textContent = timedOut?'Proovi uuesti, aga ära karda!':'Sa trükkisid lõpuni!';
+
+  document.getElementById('stat-grid').innerHTML=`
+    <div class="stat-item"><div class="stat-value">${score}</div><div class="stat-label">Punktid</div></div>
+    <div class="stat-item"><div class="stat-value">${accuracy}%</div><div class="stat-label">Täpsus</div></div>
+    <div class="stat-item"><div class="stat-value">${elapsedSeconds}s</div><div class="stat-label">Aeg</div></div>
+    <div class="stat-item"><div class="stat-value">${errors}</div><div class="stat-label">Vead</div></div>
+  `;
+
+  const nb=document.getElementById('next-level-btn');
+  if(currentLevel>=3){
+    nb.textContent='Näita tulemust! 🏆';
+    nb.onclick=showFinalDone;
+  } else {
+    nb.textContent='Järgmine tase! ➡';
+    nb.onclick=nextLevel;
+  }
+
+  if(!timedOut) spawnConfetti();
+  showScreen('screen-complete');
+}
+
+function nextLevel(){
+  if(currentLevel<3) startLevel(currentLevel+1);
+  else showFinalDone();
+}
+
+function showFinalDone(){
+  document.getElementById('final-score').textContent=totalScore;
+  spawnConfetti();
+  showScreen('screen-done');
+}
+
+function restartAll(){
+  totalScore=0; unlockedLevel=1; currentLevel=1; levelScores={};
+  document.getElementById('total-score').textContent='0';
+  showLevels();
+}
+
+// ====== FEEDBACK ======
+function showFeedback(text, good){
+  const el=document.getElementById('feedback');
+  el.className='feedback '+(good?'good':'bad');
+  el.textContent=text;
+  el.classList.add('show');
+  setTimeout(()=>{el.classList.remove('show');el.classList.add('hide');},600);
+  setTimeout(()=>el.classList.remove('hide'),700);
+}
+
+// ====== CONFETTI ======
+function spawnConfetti(){
+  const colors=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff9f43','#da77ff'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}%;top:-20px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*0.8}s;animation-duration:${1.5+Math.random()*1.5}s;transform:rotate(${Math.random()*360}deg);width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),3000);
+  }
+}
+
+// ====== BOOT ======
+initStars();
+showScreen('screen-home');
+document.getElementById('start-btn').onclick=startTyping;
+</script>
+</body>
+</html>
