@@ -4,253 +4,566 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hiire Mäng 🐭</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f131a;
-    --surface: #171f2b;
-    --path: #f6f0db;
-    --wall: #22344a;
-    --wall-edge: #3f5d7f;
-    --start: #7fd38a;
-    --finish: #ff6b6b;
-    --accent: #ffd166;
-    --text: #ecf2ff;
-    --muted: #9fb2ce;
+    --bg: #0d1117;
+    --surface: #161b22;
+    --wall: #1e3a5f;
+    --wall-top: #2d5a8e;
+    --path: #1a2332;
+    --path2: #1e2a3a;
+    --start: #2ea043;
+    --start-glow: rgba(46,160,67,0.4);
+    --finish: #f85149;
+    --finish-glow: rgba(248,81,73,0.4);
+    --accent: #f9c74f;
+    --text: #e6edf3;
+    --muted: #7d8590;
   }
 
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: radial-gradient(circle at top, #182334, var(--bg));
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    cursor: none;
+    overflow: hidden;
+  }
+
+  /* Custom mouse cursor */
+  #cursor {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    font-size: 28px;
+    transform: translate(-4px, -4px);
+    transition: transform 0.05s;
+    filter: drop-shadow(0 2px 6px rgba(249,199,79,0.6));
+    will-change: left, top;
   }
 
   .game-shell {
-    width: min(900px, 100%);
+    width: min(860px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
+  /* Header */
   .topbar {
     display: flex;
     justify-content: space-between;
-    gap: 16px;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 14px;
+    gap: 10px;
   }
 
   .title {
-    margin: 0;
+    font-family: 'Baloo 2', cursive;
     font-size: 2rem;
-  }
-
-  .meta {
-    display: flex;
-    gap: 18px;
-    color: var(--muted);
-    font-weight: 700;
-  }
-
-  .status {
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
+    font-weight: 800;
     color: var(--accent);
-    padding: 10px 14px;
-    border-radius: 10px;
-    margin-bottom: 12px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
+    text-shadow: 0 0 30px rgba(249,199,79,0.5);
+    letter-spacing: -0.5px;
   }
 
-  #maze {
-    position: relative;
-    width: 100%;
-    max-width: 820px;
-    height: 430px;
-    background: var(--path);
-    border: 8px solid #0a0f15;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 18px 40px rgba(0,0,0,0.45);
-  }
-
-  .wall {
-    position: absolute;
-    background: linear-gradient(180deg, var(--wall-edge), var(--wall));
-    border-radius: 8px;
-  }
-
-  .zone {
-    position: absolute;
-    border-radius: 10px;
-    font-weight: 700;
-    color: #111;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 6px;
-  }
-
-  .start-zone {
-    left: 18px;
-    bottom: 16px;
-    width: 132px;
-    height: 96px;
-    background: var(--start);
-  }
-
-  .finish-zone {
-    right: 18px;
-    top: 16px;
-    width: 126px;
-    height: 86px;
-    background: var(--finish);
-  }
-
-  #start-btn {
-    border: 0;
-    border-radius: 999px;
-    font-weight: 700;
-    padding: 10px 14px;
-    background: #1f3d20;
-    color: #fff;
-    cursor: pointer;
-  }
-
-  .controls {
-    margin-top: 12px;
+  .meta-pills {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--muted);
+    display: flex;
     align-items: center;
+    gap: 6px;
+  }
+  .pill span { color: var(--text); }
+
+  /* Status bar */
+  .status-bar {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.3s;
+  }
+  .status-bar.danger { color: #f85149; }
+  .status-bar.success { color: #3fb950; }
+
+  /* Canvas wrapper */
+  .maze-wrap {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 24px 60px rgba(0,0,0,0.6),
+      0 0 80px rgba(249,199,79,0.04);
+  }
+
+  #maze-canvas {
+    display: block;
+    width: 100%;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
   .btn {
-    background: #26384f;
-    border: 1px solid rgba(255,255,255,0.18);
-    color: var(--text);
+    font-family: 'Baloo 2', cursive;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 9px 20px;
     border-radius: 10px;
-    padding: 9px 12px;
-    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.12);
+    cursor: none;
     text-decoration: none;
-    font-weight: 700;
+    transition: all 0.2s;
   }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #f4a228);
+    color: #0d1117;
+    border-color: transparent;
+    box-shadow: 0 4px 20px rgba(249,199,79,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(249,199,79,0.45); }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .btn-secondary:hover { background: #21262d; }
+
+  /* Level dots */
+  .level-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: background 0.3s;
+  }
+  .dot.done { background: #3fb950; }
+  .dot.current { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 </style>
 </head>
 <body>
+
+<div id="cursor">🐭</div>
+
 <div class="game-shell">
   <div class="topbar">
     <h1 class="title">🐭 Hiire Mäng</h1>
-    <div class="meta">
-      <span>Eesmärk: START ➜ FINIŠ</span>
-      <span>Elud: <strong id="lives">3</strong></span>
+    <div class="meta-pills">
+      <div class="pill">Tase <span id="level-num">1</span></div>
+      <div class="pill">❤️ <span id="lives-val">3</span></div>
+      <div class="level-dots" id="level-dots"></div>
     </div>
   </div>
 
-  <div class="status" id="status">Vii kursor START alale ja vajuta "Alusta".</div>
+  <div class="status-bar" id="status">Vii hiir START nupule ja vajuta!</div>
 
-  <div id="maze">
-    <div class="zone start-zone">
-      <button id="start-btn" type="button">Alusta</button>
-    </div>
-    <div class="zone finish-zone" id="finish">FINIŠ</div>
-
-    <div class="wall" style="left:165px; top:0; width:30px; height:335px;"></div>
-    <div class="wall" style="left:165px; top:360px; width:30px; height:70px;"></div>
-
-    <div class="wall" style="left:165px; top:120px; width:220px; height:30px;"></div>
-    <div class="wall" style="left:260px; top:120px; width:30px; height:220px;"></div>
-    <div class="wall" style="left:260px; top:310px; width:210px; height:30px;"></div>
-
-    <div class="wall" style="left:385px; top:0; width:30px; height:230px;"></div>
-    <div class="wall" style="left:385px; top:255px; width:30px; height:175px;"></div>
-
-    <div class="wall" style="left:475px; top:90px; width:200px; height:30px;"></div>
-    <div class="wall" style="left:560px; top:90px; width:30px; height:250px;"></div>
-
-    <div class="wall" style="left:675px; top:0; width:30px; height:260px;"></div>
-    <div class="wall" style="left:675px; top:285px; width:30px; height:145px;"></div>
-
-    <div class="wall" style="left:475px; top:340px; width:130px; height:30px;"></div>
+  <div class="maze-wrap">
+    <canvas id="maze-canvas"></canvas>
   </div>
 
   <div class="controls">
-    <button class="btn" id="reset" type="button">Alusta uuesti</button>
-    <a class="btn" href="../../index.html">← Tagasi mängude valikusse</a>
+    <button class="btn btn-primary" id="new-maze-btn">🔀 Uus labürint</button>
+    <button class="btn btn-secondary" id="reset-btn">↺ Alusta uuesti</button>
+    <a class="btn btn-secondary" href="../../index.html">← Tagasi</a>
   </div>
 </div>
 
 <script>
-  const livesEl = document.getElementById('lives');
-  const statusEl = document.getElementById('status');
-  const startBtn = document.getElementById('start-btn');
-  const finishEl = document.getElementById('finish');
-  const maze = document.getElementById('maze');
-  const resetBtn = document.getElementById('reset');
+// ======== CONFIG ========
+const LEVELS = [
+  { cols: 12, rows: 8,  cell: 52, lives: 3 },
+  { cols: 16, rows: 10, cell: 44, lives: 3 },
+  { cols: 20, rows: 13, cell: 36, lives: 3 },
+];
+const MAX_LEVELS = LEVELS.length;
+const WALL_THICK = 6;
 
-  let lives = 3;
-  let started = false;
-  let won = false;
+// ======== STATE ========
+let level = 0;
+let lives = 3;
+let phase = 'idle'; // idle | playing | dead | won
+let maze = null;
+let finishCell = null;
+let startCell = { r: 0, c: 0 }; // always top-left in grid = bottom-left visually
+let mouseInCanvas = false;
 
-  function setStatus(text) {
-    statusEl.textContent = text;
+const canvas = document.getElementById('maze-canvas');
+const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+const livesEl = document.getElementById('lives-val');
+const levelEl = document.getElementById('level-num');
+const dotsEl = document.getElementById('level-dots');
+const cursorEl = document.getElementById('cursor');
+
+// ======== CURSOR ========
+document.addEventListener('mousemove', e => {
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top  = e.clientY + 'px';
+});
+
+// ======== MAZE GENERATION (recursive backtracker) ========
+function generateMaze(cols, rows) {
+  // Each cell: { visited, walls: [N,E,S,W] }
+  const grid = Array.from({length: rows}, () =>
+    Array.from({length: cols}, () => ({ visited: false, walls: [true,true,true,true] }))
+  );
+
+  const idx = (r,c) => r*cols+c;
+  const neighbors = (r,c) => [
+    [r-1,c,0,2],[r,c+1,1,3],[r+1,c,2,0],[r,c-1,3,1]
+  ].filter(([nr,nc])=>nr>=0&&nr<rows&&nc>=0&&nc<cols);
+
+  const stack = [];
+  const start = {r:0,c:0};
+  grid[start.r][start.c].visited = true;
+  stack.push(start);
+
+  while(stack.length) {
+    const {r,c} = stack[stack.length-1];
+    const unvisited = neighbors(r,c).filter(([nr,nc])=>!grid[nr][nc].visited);
+    if(!unvisited.length){ stack.pop(); continue; }
+    const [nr,nc,w1,w2] = unvisited[Math.floor(Math.random()*unvisited.length)];
+    grid[r][c].walls[w1] = false;
+    grid[nr][nc].walls[w2] = false;
+    grid[nr][nc].visited = true;
+    stack.push({r:nr,c:nc});
+  }
+  return grid;
+}
+
+// ======== PICK FINISH (far from start using BFS) ========
+function pickFinish(grid, cols, rows) {
+  const dist = Array.from({length:rows},()=>Array(cols).fill(-1));
+  const queue = [{r:0,c:0}];
+  dist[0][0] = 0;
+  const dirs = [[-1,0,0],[0,1,1],[1,0,2],[0,-1,3]];
+  while(queue.length){
+    const {r,c} = queue.shift();
+    for(const [dr,dc,w] of dirs){
+      const nr=r+dr, nc=c+dc;
+      if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
+      if(grid[r][c].walls[w]) continue;
+      if(dist[nr][nc]!==-1) continue;
+      dist[nr][nc]=dist[r][c]+1;
+      queue.push({r:nr,c:nc});
+    }
+  }
+  let best={r:0,c:0,d:0};
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++)
+    if(dist[r][c]>best.d) best={r,c,d:dist[r][c]};
+  return {r:best.r,c:best.c};
+}
+
+// ======== DRAW ========
+const COLORS = {
+  bg: '#0d1117',
+  path: '#1a2535',
+  path2: '#1e2a3a',
+  wall: '#0a0f18',
+  wallFace: '#1e3a5f',
+  wallTop: '#2d5a8e',
+  start: '#2ea043',
+  startGlow: 'rgba(46,160,67,0.35)',
+  finish: '#f85149',
+  finishGlow: 'rgba(248,81,73,0.35)',
+  accent: '#f9c74f',
+};
+
+function draw() {
+  const cfg = LEVELS[level];
+  const { cols, rows } = cfg;
+  const CELL = cfg.cell;
+  const W = cols * CELL;
+  const H = rows * CELL;
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.aspectRatio = `${W}/${H}`;
+
+  // Background
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0,0,W,H);
+
+  // Floor tiles
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    ctx.fillStyle = (r+c)%2===0 ? COLORS.path : COLORS.path2;
+    ctx.fillRect(c*CELL, r*CELL, CELL, CELL);
   }
 
-  function updateLives() {
-    livesEl.textContent = String(lives);
+  // Start zone glow
+  const [sr,sc] = [startCell.r, startCell.c];
+  const sx=sc*CELL, sy=sr*CELL;
+  const sgrd = ctx.createRadialGradient(sx+CELL/2,sy+CELL/2,0,sx+CELL/2,sy+CELL/2,CELL*1.2);
+  sgrd.addColorStop(0, COLORS.startGlow); sgrd.addColorStop(1,'transparent');
+  ctx.fillStyle=sgrd; ctx.fillRect(sx-CELL,sy-CELL,CELL*3,CELL*3);
+
+  // Finish zone glow
+  if(finishCell){
+    const fx=finishCell.c*CELL, fy=finishCell.r*CELL;
+    const fgrd=ctx.createRadialGradient(fx+CELL/2,fy+CELL/2,0,fx+CELL/2,fy+CELL/2,CELL*1.2);
+    fgrd.addColorStop(0,COLORS.finishGlow); fgrd.addColorStop(1,'transparent');
+    ctx.fillStyle=fgrd; ctx.fillRect(fx-CELL,fy-CELL,CELL*3,CELL*3);
   }
 
-  function loseLife() {
-    if (!started || won) return;
-    lives -= 1;
-    started = false;
-    updateLives();
+  // Draw walls
+  const T = WALL_THICK;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const cell = maze[r][c];
+    const x=c*CELL, y=r*CELL;
+    ctx.fillStyle=COLORS.wall;
+    // North wall
+    if(cell.walls[0]) { ctx.fillRect(x,y,CELL,T); ctx.fillStyle=COLORS.wallTop; ctx.fillRect(x,y,CELL,2); ctx.fillStyle=COLORS.wall; }
+    // East wall
+    if(cell.walls[1]) { ctx.fillRect(x+CELL-T,y,T,CELL); }
+    // South wall
+    if(cell.walls[2]) { ctx.fillRect(x,y+CELL-T,CELL,T); ctx.fillStyle=COLORS.wallTop; ctx.fillRect(x,y+CELL-2,CELL,2); ctx.fillStyle=COLORS.wall; }
+    // West wall
+    if(cell.walls[3]) { ctx.fillRect(x,y,T,CELL); }
+  }
 
-    if (lives <= 0) {
-      setStatus('Kõik elud otsas! Vajuta "Alusta uuesti" ja proovi uuesti.');
+  // Outer border
+  ctx.fillStyle=COLORS.wall;
+  ctx.fillRect(0,0,W,T); ctx.fillRect(0,H-T,W,T);
+  ctx.fillRect(0,0,T,H); ctx.fillRect(W-T,0,T,H);
+
+  // Start cell
+  ctx.fillStyle=COLORS.start;
+  ctx.fillRect(sx+T+2,sy+T+2,CELL-T*2-4,CELL-T*2-4);
+  ctx.fillStyle='#fff';
+  ctx.font=`bold ${CELL*0.28}px Baloo 2,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  if(phase==='idle'){
+    ctx.fillText('START',sx+CELL/2,sy+CELL/2);
+  } else {
+    ctx.fillText('S',sx+CELL/2,sy+CELL/2);
+  }
+
+  // Finish cell
+  if(finishCell){
+    const fx=finishCell.c*CELL,fy=finishCell.r*CELL;
+    ctx.fillStyle=COLORS.finish;
+    ctx.fillRect(fx+T+2,fy+T+2,CELL-T*2-4,CELL-T*2-4);
+    ctx.fillStyle='#fff';
+    ctx.font=`bold ${CELL*0.28}px Baloo 2,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('FINIŠ',fx+CELL/2,fy+CELL/2);
+  }
+
+  // Pulse ring on start when idle
+  if(phase==='idle'){
+    const t = Date.now()/800;
+    const pulse = 0.5+0.5*Math.sin(t);
+    ctx.strokeStyle=`rgba(46,160,67,${0.3+0.4*pulse})`;
+    ctx.lineWidth=3;
+    ctx.strokeRect(sx+T,sy+T,CELL-T*2,CELL-T*2);
+  }
+}
+
+// ======== ANIMATION LOOP (only needed for idle pulse) ========
+let raf;
+function loop(){
+  if(phase==='idle') draw();
+  raf = requestAnimationFrame(loop);
+}
+
+// ======== INIT / NEW MAZE ========
+function initLevel(lvl) {
+  level = lvl;
+  const cfg = LEVELS[level];
+  lives = cfg.lives;
+  phase = 'idle';
+  startCell = { r: 0, c: 0 };
+  maze = generateMaze(cfg.cols, cfg.rows);
+  finishCell = pickFinish(maze, cfg.cols, cfg.rows);
+  updateUI();
+  draw();
+}
+
+function newMaze(){
+  initLevel(level);
+}
+
+function resetLevel(){
+  phase = 'idle';
+  lives = LEVELS[level].lives;
+  updateUI();
+  draw();
+}
+
+function updateUI(){
+  livesEl.textContent = lives;
+  levelEl.textContent = level+1;
+  setStatus('Vii hiir START lahtrisse ja alusta!', '');
+
+  // dots
+  dotsEl.innerHTML='';
+  for(let i=0;i<MAX_LEVELS;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i<level?' done':i===level?' current':'');
+    dotsEl.appendChild(d);
+  }
+}
+
+function setStatus(msg, type=''){
+  statusEl.textContent = msg;
+  statusEl.className = 'status-bar' + (type?' '+type:'');
+}
+
+// ======== HIT DETECTION ========
+function cellFromMouse(e){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  const cfg = LEVELS[level];
+  const c = Math.floor(x / cfg.cell);
+  const r = Math.floor(y / cfg.cell);
+  return { c, r, x, y };
+}
+
+function isOnStart(e){
+  const {r,c} = cellFromMouse(e);
+  return r===startCell.r && c===startCell.c;
+}
+
+function isOnFinish(e){
+  if(!finishCell) return false;
+  const {r,c} = cellFromMouse(e);
+  return r===finishCell.r && c===finishCell.c;
+}
+
+function isOnWall(e){
+  const {x,y} = cellFromMouse(e);
+  const cfg = LEVELS[level];
+  const CELL = cfg.cell;
+  const T = WALL_THICK + 2; // slightly generous
+  const c = Math.floor(x/CELL);
+  const r = Math.floor(y/CELL);
+  if(r<0||r>=cfg.rows||c<0||c>=cfg.cols) return true; // out of bounds = wall
+  const lx = x - c*CELL;
+  const ly = y - r*CELL;
+  const cell = maze[r][c];
+  if(cell.walls[0] && ly<T) return true;
+  if(cell.walls[2] && ly>CELL-T) return true;
+  if(cell.walls[3] && lx<T) return true;
+  if(cell.walls[1] && lx>CELL-T) return true;
+  return false;
+}
+
+canvas.addEventListener('mouseenter', () => { mouseInCanvas = true; });
+canvas.addEventListener('mouseleave', () => {
+  mouseInCanvas = false;
+  if(phase==='playing'){
+    hitWall();
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  if(phase !== 'playing') return;
+  if(isOnWall(e)){ hitWall(); return; }
+  if(isOnFinish(e)){ winLevel(); return; }
+});
+
+canvas.addEventListener('mouseenter', e => {
+  if(phase==='idle' && isOnStart(e)){
+    startPlaying();
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  if(phase==='idle' && mouseInCanvas && isOnStart(e)){
+    startPlaying();
+  }
+});
+
+function startPlaying(){
+  phase='playing';
+  setStatus('Liigu FINIŠisse ilma seinu puudutamata! 🏃', '');
+  draw();
+}
+
+function hitWall(){
+  if(phase!=='playing') return;
+  phase='idle';
+  lives--;
+  livesEl.textContent=lives;
+  if(lives<=0){
+    phase='dead';
+    setStatus('Kõik elud otsas! 💀 Vajuta "Alusta uuesti".','danger');
+    draw();
+  } else {
+    setStatus(`Sein! ❌ ${lives} elu alles — mine tagasi STARTi.`,'danger');
+    draw();
+    setTimeout(()=>{ if(phase!=='dead') setStatus('Mine tagasi STARTi ja alusta uuesti!',''); },1800);
+  }
+}
+
+function winLevel(){
+  if(phase!=='playing') return;
+  phase='won';
+  setStatus('🎉 Tubli! Jõudsid FINIŠisse!','success');
+  draw();
+  // Draw win flash
+  ctx.fillStyle='rgba(46,160,67,0.25)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.font=`bold ${LEVELS[level].cell*1.5}px Baloo 2,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='#fff';
+  ctx.fillText('🎉',canvas.width/2,canvas.height/2);
+
+  setTimeout(()=>{
+    if(level+1 < MAX_LEVELS){
+      initLevel(level+1);
     } else {
-      setStatus('Puudutasid seina! Mine START alale tagasi ja vajuta "Alusta".');
+      setStatus('🏆 Kõik tasemed läbitud! Oled meister!','success');
+      phase='done';
     }
-  }
+  }, 1500);
+}
 
-  function startRun() {
-    if (lives <= 0) {
-      setStatus('Elud on otsas. Vajuta "Alusta uuesti".');
-      return;
-    }
-    won = false;
-    started = true;
-    setStatus('Liigu rahulikult FINIŠ alale ilma seinu puudutamata!');
-  }
+// ======== BUTTONS ========
+document.getElementById('new-maze-btn').addEventListener('click', newMaze);
+document.getElementById('reset-btn').addEventListener('click', resetLevel);
 
-  function winRun() {
-    if (!started || won) return;
-    won = true;
-    started = false;
-    setStatus('Tubli! Jõudsid FINIŠisse! 🎉');
-  }
-
-  function resetGame() {
-    lives = 3;
-    won = false;
-    started = false;
-    updateLives();
-    setStatus('Vii kursor START alale ja vajuta "Alusta".');
-  }
-
-  startBtn.addEventListener('mouseenter', startRun);
-  startBtn.addEventListener('click', startRun);
-  finishEl.addEventListener('mouseenter', winRun);
-  maze.addEventListener('mouseleave', loseLife);
-  document.querySelectorAll('.wall').forEach(wall => wall.addEventListener('mouseenter', loseLife));
-  resetBtn.addEventListener('click', resetGame);
+// ======== START ========
+initLevel(0);
+cancelAnimationFrame(raf);
+loop();
 </script>
 </body>
 </html>
