@@ -635,22 +635,22 @@ function drawMaze(blurred) {
   canvas.height = rows * CELL;
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // Draw everything blurred first
-  if(blurred) ctx.filter = 'blur(4px) brightness(0.5)';
+  const doBlur = blurred || phase === 'holding' || phase === 'countdown';
+
+  if(doBlur) ctx.filter = 'blur(4px) brightness(0.5)';
 
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
       const x=c*CELL, y=r*CELL, type=cells[r][c];
-      // Skip start cells for now if blurred (draw them sharp after)
-      if(blurred && type==='start') continue;
+      if(doBlur && type==='start') continue;
       drawCell(r,c,x,y,type);
     }
   }
 
   ctx.filter = 'none';
 
-  // Draw start cells always sharp
-  if(blurred) {
+  // Always draw start cells sharp
+  if(doBlur) {
     for(const sc of mazeData.startCells) {
       drawCell(sc.r, sc.c, sc.c*CELL, sc.r*CELL, 'start');
     }
@@ -661,7 +661,7 @@ function drawMaze(blurred) {
   for(let r=0;r<=rows;r++){ctx.beginPath();ctx.moveTo(0,r*CELL);ctx.lineTo(cols*CELL,r*CELL);ctx.stroke();}
   for(let c=0;c<=cols;c++){ctx.beginPath();ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,rows*CELL);ctx.stroke();}
 
-  // Hold progress ring over start area
+  // Hold progress ring — only during active holding, not after
   if(phase==='holding' && mazeData.startCells.length>0){
     const sc = mazeData.startCells[1] || mazeData.startCells[0];
     const cx = sc.c*CELL+CELL/2, cy = sc.r*CELL+CELL/2;
@@ -676,13 +676,11 @@ function drawMaze(blurred) {
     ctx.stroke();
   }
 
-  // "Go back to start!" message overlay on canvas
+  // "Go back to start!" message
   if(phase==='wall_hit'){
     ctx.fillStyle='rgba(249,65,68,0.85)';
     const mw=canvas.width*0.75, mh=50, mx=(canvas.width-mw)/2, my=(canvas.height-mh)/2;
-    ctx.beginPath();
-    ctx.roundRect(mx,my,mw,mh,12);
-    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(mx,my,mw,mh,12); ctx.fill();
     ctx.fillStyle='#fff';
     ctx.font=`bold ${CELL*0.65}px Baloo 2,sans-serif`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -745,26 +743,27 @@ function startHolding() {
     holdRingPct = Math.min((now - holdStartTime) / HOLD_DURATION, 1);
     drawMaze(false);
 
-    // Draw countdown number on canvas over the start area
-    const sc = mazeData.startCells[1] || mazeData.startCells[0];
-    const cx = sc.c*CELL+CELL/2, cy = sc.r*CELL+CELL/2;
-    const countNum = Math.ceil((1 - holdRingPct) * 3);
-    ctx.font = `bold ${CELL*2}px Baloo 2,sans-serif`;
+    // Draw countdown number in CENTER of maze
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const countNum = Math.ceil((1 - holdRingPct) * 3) || 1;
+    const fontSize = Math.min(canvas.width, canvas.height) * 0.35;
+    ctx.font = `bold ${fontSize}px Baloo 2,sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillText(countNum, cx+2, cy+2);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillText(countNum, cx+4, cy+4);
     ctx.fillStyle = '#f9c74f';
     ctx.fillText(countNum, cx, cy);
 
     if(holdRingPct < 1) {
       holdAnimFrame = requestAnimationFrame(animHold);
     } else {
-      // Done holding — show Läks! briefly then start
+      // Show Läks! in center then start
       drawMaze(false);
-      ctx.font = `bold ${CELL*1.5}px Baloo 2,sans-serif`;
+      ctx.font = `bold ${fontSize * 0.7}px Baloo 2,sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fillText('Läks!', cx+2, cy+2);
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText('Läks!', cx+4, cy+4);
       ctx.fillStyle = '#43aa8b';
       ctx.fillText('Läks!', cx, cy);
       phase = 'countdown';
