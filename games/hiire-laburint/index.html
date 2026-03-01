@@ -355,10 +355,17 @@ function draw() {
     if(cell.walls[3]) { ctx.fillRect(x,y,T,CELL); }
   }
 
-  // Outer border
+  // Outer border — leave gap on top and left edges at start cell (r=0,c=0)
+  const CELL = cfg.cell;
   ctx.fillStyle=COLORS.wall;
-  ctx.fillRect(0,0,W,T); ctx.fillRect(0,H-T,W,T);
-  ctx.fillRect(0,0,T,H); ctx.fillRect(W-T,0,T,H);
+  // Top edge: skip start cell's top
+  ctx.fillRect(CELL,0,W-CELL,T); // top, after col 0
+  // Bottom edge: full
+  ctx.fillRect(0,H-T,W,T);
+  // Left edge: skip start cell's left
+  ctx.fillRect(0,CELL,T,H-CELL); // left, after row 0
+  // Right edge: full
+  ctx.fillRect(W-T,0,T,H);
 
   // Start cell
   ctx.fillStyle=COLORS.start;
@@ -408,6 +415,9 @@ function initLevel(lvl) {
   phase = 'idle';
   startCell = { r: 0, c: 0 };
   maze = generateMaze(cfg.cols, cfg.rows);
+  // Open the top and left walls of start cell so player can enter from outside
+  maze[0][0].walls[0] = false; // north
+  maze[0][0].walls[3] = false; // west
   finishCell = pickFinish(maze, cfg.cols, cfg.rows);
   updateUI();
   draw();
