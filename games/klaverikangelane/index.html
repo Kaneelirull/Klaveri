@@ -94,11 +94,9 @@
 
   /* Keyboard diagram */
   .keyboard-demo { margin:20px 0; display:flex; flex-direction:column; align-items:center; }
-  .kbd-row { display:flex; justify-content:flex-start; gap:6px; margin-bottom:6px; }
-  .kbd-row:nth-child(1) { margin-left: 0px; }
-  .kbd-row:nth-child(2) { margin-left: 25px; }
-  .kbd-row:nth-child(3) { margin-left: 50px; }
-  .kbd-row:nth-child(4) { margin-left: 0; justify-content:center; }
+  .kbd-row { display:flex; justify-content:center; gap:6px; margin-bottom:6px; }
+  .kbd-row:nth-child(4) { justify-content:center; }
+  .key.ghost { visibility:hidden; pointer-events:none; }
   .key {
     display:flex; align-items:center; justify-content:center;
     width:44px; height:44px;
@@ -599,6 +597,13 @@ function buildKeyboard(containerId, highlightKeys=[], targetKey=null){
       if(targetKey && k===targetKey.toLowerCase()) el.classList.add('target');
       rowEl.appendChild(el);
     });
+    // Add ghost keys for stagger alignment
+    const ghosts = row===ROWS[1] ? 1 : row===ROWS[2] ? 2 : 0;
+    for(let g=0;g<ghosts;g++){
+      const ghost = document.createElement('div');
+      ghost.className='key ghost';
+      rowEl.appendChild(ghost);
+    }
     c.appendChild(rowEl);
   });
 
