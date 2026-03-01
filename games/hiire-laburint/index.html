@@ -842,10 +842,34 @@ function runCountdown(callback) {
   overlay.classList.remove('hidden');
   showStartArrow();
 
+  // --- Animate fake cursor to START cell ---
+  if(mazeData.startCell) {
+    const rect = canvas.getBoundingClientRect();
+    const sc = mazeData.startCell;
+    const targetX = rect.left + sc.c * CELL + CELL / 2;
+    const targetY = rect.top  + sc.r * CELL + CELL / 2;
+
+    const fromX = cursorX;
+    const fromY = cursorY;
+    const duration = 700; // ms
+    const start = performance.now();
+
+    function animCursor(now) {
+      const t = Math.min((now - start) / duration, 1);
+      // ease-out cubic
+      const e = 1 - Math.pow(1 - t, 3);
+      cursorX = fromX + (targetX - fromX) * e;
+      cursorY = fromY + (targetY - fromY) * e;
+      cursorEl.style.left = cursorX + 'px';
+      cursorEl.style.top  = cursorY + 'px';
+      if(t < 1) requestAnimationFrame(animCursor);
+    }
+    requestAnimationFrame(animCursor);
+  }
+
   let count = 3;
   numEl.className = '';
   numEl.textContent = count;
-  // Force reflow to restart animation each tick
   void numEl.offsetWidth;
 
   const tick = setInterval(() => {
