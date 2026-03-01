@@ -598,11 +598,18 @@ function buildKeyboard(containerId, highlightKeys=[], targetKey=null){
       rowEl.appendChild(el);
     });
     // Add ghost keys for stagger alignment
-    const ghosts = row===ROWS[1] ? 1 : row===ROWS[2] ? 2 : 0;
-    for(let g=0;g<ghosts;g++){
+    // Row 2: half ghost (22px) at end, Row 3: 4 full ghosts at end
+    if(row===ROWS[1]){
       const ghost = document.createElement('div');
       ghost.className='key ghost';
+      ghost.style.width='22px';
       rowEl.appendChild(ghost);
+    } else if(row===ROWS[2]){
+      for(let g=0;g<4;g++){
+        const ghost = document.createElement('div');
+        ghost.className='key ghost';
+        rowEl.appendChild(ghost);
+      }
     }
     c.appendChild(rowEl);
   });
