@@ -408,12 +408,12 @@ function nextTarget() {
   const pool = COLORS.filter(c => !targetColor || c.id !== targetColor.id);
   targetColor = pool[Math.floor(Math.random() * pool.length)];
   // Re-animate word
+  colorWord.style.color = targetColor.hex;
   colorWord.style.animation = 'none';
-  colorWord.offsetWidth; // reflow
+  colorWord.offsetWidth;
   colorWord.style.animation = '';
   const word = targetColor[lang];
   colorWord.textContent = word.charAt(0).toUpperCase() + word.slice(1);
-  colorWord.style.color = targetColor.hex;
 
   // Guarantee target is on screen: if not present, swap a random non-target balloon
   const hasTarget = [...liveBalloons.values()].some(b => b.colorId === targetColor.id);
