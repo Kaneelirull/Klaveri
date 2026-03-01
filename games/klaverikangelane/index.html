@@ -93,12 +93,12 @@
   .card p { color:rgba(255,255,255,0.75); line-height:1.6; }
 
   /* Keyboard diagram */
-  .keyboard-demo { margin:20px 0; }
-  .kbd-row { display:flex; justify-content:center; gap:6px; margin-bottom:6px; }
-  .kbd-row:nth-child(2) { padding-left: 4%; }
-  .kbd-row:nth-child(3) { padding-left: 8%; }
-  .kbd-row:nth-child(4) { padding-left: 12%; }
-  .kbd-row:nth-child(5) { padding-left: 0; justify-content:center; }
+  .keyboard-demo { margin:20px 0; display:flex; flex-direction:column; align-items:center; }
+  .kbd-row { display:flex; justify-content:flex-start; gap:6px; margin-bottom:6px; }
+  .kbd-row:nth-child(1) { margin-left: 0px; }
+  .kbd-row:nth-child(2) { margin-left: 25px; }
+  .kbd-row:nth-child(3) { margin-left: 50px; }
+  .kbd-row:nth-child(4) { margin-left: 0; justify-content:center; }
   .key {
     display:flex; align-items:center; justify-content:center;
     width:44px; height:44px;
