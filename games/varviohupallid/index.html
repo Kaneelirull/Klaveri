@@ -371,7 +371,7 @@ const wordHint   = document.getElementById('word-hint');
 function startGame(l) {
   lang = l;
   score = 0;
-  timeLeft = 30;
+  timeLeft = 60;
   active = true;
   balloonPool = [];
   bId = 0;
@@ -410,7 +410,8 @@ function nextTarget() {
   colorWord.style.animation = 'none';
   colorWord.offsetWidth; // reflow
   colorWord.style.animation = '';
-  colorWord.textContent = targetColor[lang];
+  const word = targetColor[lang];
+  colorWord.textContent = word.charAt(0).toUpperCase() + word.slice(1);
   colorWord.style.color = targetColor.hex;
 
   // Guarantee target is on screen: if not present, swap a random non-target balloon
