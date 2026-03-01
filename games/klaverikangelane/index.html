@@ -713,27 +713,37 @@ function startTyping(){
 }
 
 function getCurrentSentence() {
-  // Split text into sentences at . ! ? \n boundaries
-  // Find which sentence currentIndex falls in, return that sentence's start/end
   const text = challengeText;
-  const breaks = [-1]; // sentence start offsets
-  for(let i=0;i<text.length;i++){
-    if(text[i]==='\n' || (text[i]==='.' && (i+1>=text.length||text[i+1]===' '||text[i+1]==='\n'))){
-      breaks.push(i+1);
-    }
-  }
-  breaks.push(text.length);
 
-  let sentStart=0, sentEnd=text.length;
-  for(let b=0;b<breaks.length-1;b++){
-    const s = breaks[b]+1 < 0 ? 0 : breaks[b]+1;
-    const e = breaks[b+1];
-    if(currentIndex >= s && currentIndex < e){
-      sentStart = s; sentEnd = e; break;
+  // Find sentence boundaries: positions right after . ! ? \n
+  const sentenceStarts = [0];
+  for(let i=0;i<text.length-1;i++){
+    if(text[i]==='.' || text[i]==='!' || text[i]==='?' || text[i]==='\n'){
+      // Next sentence starts after the following space (or immediately if \n)
+      let next = i+1;
+      while(next < text.length && text[next]===' ') next++;
+      if(next < text.length) sentenceStarts.push(next);
     }
   }
-  // Trim leading space
-  if(text[sentStart]===' ') sentStart++;
+  sentenceStarts.push(text.length);
+
+  // Find which sentence the NEXT character to type belongs to
+  // Use currentIndex (what we're about to type), but if we just typed a '.' 
+  // treat the trailing space as part of previous sentence still
+  let idx = currentIndex;
+
+  let sentStart = 0, sentEnd = text.length;
+  for(let b=0;b<sentenceStarts.length-1;b++){
+    if(idx >= sentenceStarts[b] && idx < sentenceStarts[b+1]){
+      sentStart = sentenceStarts[b];
+      sentEnd = sentenceStarts[b+1];
+      break;
+    }
+  }
+
+  // Trim trailing space from display (the space before next sentence)
+  while(sentEnd > sentStart && text[sentEnd-1]===' ') sentEnd--;
+
   return { sentStart, sentEnd };
 }
 
