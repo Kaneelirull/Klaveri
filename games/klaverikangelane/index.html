@@ -490,7 +490,7 @@ const FINGER_NAME = {
 const ROWS = [
   ['q','w','e','r','t','y','u','i','o','p','ü','õ'],
   ['a','s','d','f','g','h','j','k','l','ö','ä'],
-  ['z','x','c','v','b','n','m']
+  ['z','x','c','v','b','n','m',',','.']
 ];
 const HOME_KEYS = new Set(['a','s','d','f','j','k','l','ö']);
 
@@ -606,19 +606,13 @@ function buildKeyboard(containerId, highlightKeys=[], targetKey=null){
       if(targetKey && k===targetKey.toLowerCase()) el.classList.add('target');
       rowEl.appendChild(el);
     });
-    // Add ghost keys for stagger alignment
-    // Row 2: half ghost (22px) at end, Row 3: 4 full ghosts at end
+    // Add ghost key for stagger alignment
+    // Row 2: half ghost (22px) at end only
     if(row===ROWS[1]){
       const ghost = document.createElement('div');
       ghost.className='key ghost';
       ghost.style.width='22px';
       rowEl.appendChild(ghost);
-    } else if(row===ROWS[2]){
-      for(let g=0;g<4;g++){
-        const ghost = document.createElement('div');
-        ghost.className='key ghost';
-        rowEl.appendChild(ghost);
-      }
     }
     c.appendChild(rowEl);
   });
@@ -795,6 +789,11 @@ function handleKey(e){
     e.preventDefault();
     flashKey('kbd-type', effectiveExpected, 'correct-flash');
     currentIndex++;
+    // After typing a sentence-ending punctuation, auto-skip the following space
+    const justTyped = expected;
+    if((justTyped==='.' || justTyped==='!' || justTyped==='?') && challengeText[currentIndex]===' '){
+      currentIndex++;
+    }
     renderChallenge();
     updateNextHint();
     setTargetKey('kbd-type', currentIndex<challengeText.length?challengeText[currentIndex]:null);
