@@ -353,9 +353,6 @@ body {
 <div class="game-wrap">
   <canvas id="maze-canvas"></canvas>
   <div class="flash" id="flash"></div>
-  <div id="countdown-overlay" class="hidden">
-    <div id="countdown-number">3</div>
-  </div>
   <div id="start-arrow">👇</div>
 </div>
 
@@ -452,7 +449,7 @@ const MAZE_DEFS = [
       "W.W................W",
       "W.WWWWWWWWWWWWWWWWWW",
       "W..................W",
-      "WSSS WWWWWWWWWWWWWWW",
+      "WSSSwwwwwwwwwwwwwwww",
     ],
     stars: []
   },
@@ -486,7 +483,7 @@ const MAZE_DEFS = [
       "W.W......................W.W",
       "W.WWWWWWWWWWWWWWWWWWWWWW.W",
       "W........................W",
-      "WSSS WWWWWWWWWWWWWWWWWWWWW",
+      "WSSSWwwwwwwwwwwwwwwwwwwwww",
     ],
     stars: []
   },
@@ -520,7 +517,7 @@ const MAZE_DEFS = [
       "W.W..........................W",
       "W.WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
       "W..........................W",
-      "WSSS WWWWWWWWWWWWWWWWWWWWWWWWW",
+      "WSSSWwwwwwwwwwwwwwwwwwwwwwwww",
     ],
     stars: []
   }
@@ -638,51 +635,26 @@ function drawMaze(blurred) {
   canvas.height = rows * CELL;
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(blurred) {
-    ctx.filter = 'blur(4px) brightness(0.5)';
-  }
+  // Draw everything blurred first
+  if(blurred) ctx.filter = 'blur(4px) brightness(0.5)';
 
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
       const x=c*CELL, y=r*CELL, type=cells[r][c];
-      if(type==='wall'){
-        ctx.fillStyle=COLORS.wall; ctx.fillRect(x,y,CELL,CELL);
-        ctx.fillStyle=COLORS.wallTop; ctx.fillRect(x,y,CELL,5);
-        ctx.fillStyle='rgba(0,0,0,0.15)';
-        ctx.fillRect(x+2,y+8,3,3); ctx.fillRect(x+CELL-8,y+14,3,3);
-      } else {
-        ctx.fillStyle=((r+c)%2===0)?COLORS.path:COLORS.path2;
-        ctx.fillRect(x,y,CELL,CELL);
-        if(type==='start'){
-          ctx.fillStyle=COLORS.start; ctx.fillRect(x,y,CELL,CELL);
-          ctx.fillStyle='#fff';
-          ctx.font=`bold ${CELL*0.45}px Nunito`;
-          ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText('S',x+CELL/2,y+CELL/2+1);
-        }
-        if(type==='end'){
-          ctx.fillStyle=COLORS.end; ctx.fillRect(x,y,CELL,CELL);
-          ctx.fillStyle='#fff';
-          ctx.font=`bold ${CELL*0.38}px Nunito`;
-          ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText('F',x+CELL/2,y+CELL/2+1);
-        }
-        if(type==='star'){
-          const idx=mazeData.starCells.findIndex(s=>s.r===r&&s.c===c);
-          if(!starCollected[idx]){
-            const grd=ctx.createRadialGradient(x+CELL/2,y+CELL/2,0,x+CELL/2,y+CELL/2,CELL*0.7);
-            grd.addColorStop(0,COLORS.starGlow); grd.addColorStop(1,'transparent');
-            ctx.fillStyle=grd; ctx.fillRect(x-CELL*.2,y-CELL*.2,CELL*1.4,CELL*1.4);
-            ctx.font=`${CELL*.75}px serif`;
-            ctx.textAlign='center'; ctx.textBaseline='middle';
-            ctx.fillText('⭐',x+CELL/2,y+CELL/2+1);
-          }
-        }
-      }
+      // Skip start cells for now if blurred (draw them sharp after)
+      if(blurred && type==='start') continue;
+      drawCell(r,c,x,y,type);
     }
   }
 
   ctx.filter = 'none';
+
+  // Draw start cells always sharp
+  if(blurred) {
+    for(const sc of mazeData.startCells) {
+      drawCell(sc.r, sc.c, sc.c*CELL, sc.r*CELL, 'start');
+    }
+  }
 
   // Grid lines
   ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=0.5;
@@ -691,7 +663,7 @@ function drawMaze(blurred) {
 
   // Hold progress ring over start area
   if(phase==='holding' && mazeData.startCells.length>0){
-    const sc = mazeData.startCells[1] || mazeData.startCells[0]; // middle of 3
+    const sc = mazeData.startCells[1] || mazeData.startCells[0];
     const cx = sc.c*CELL+CELL/2, cy = sc.r*CELL+CELL/2;
     const rad = CELL*0.8;
     ctx.strokeStyle='rgba(249,199,79,0.3)';
@@ -718,6 +690,43 @@ function drawMaze(blurred) {
   }
 }
 
+function drawCell(r,c,x,y,type) {
+  if(type==='wall'){
+    ctx.fillStyle=COLORS.wall; ctx.fillRect(x,y,CELL,CELL);
+    ctx.fillStyle=COLORS.wallTop; ctx.fillRect(x,y,CELL,5);
+    ctx.fillStyle='rgba(0,0,0,0.15)';
+    ctx.fillRect(x+2,y+8,3,3); ctx.fillRect(x+CELL-8,y+14,3,3);
+  } else {
+    ctx.fillStyle=((r+c)%2===0)?COLORS.path:COLORS.path2;
+    ctx.fillRect(x,y,CELL,CELL);
+    if(type==='start'){
+      ctx.fillStyle=COLORS.start; ctx.fillRect(x,y,CELL,CELL);
+      ctx.fillStyle='#fff';
+      ctx.font=`bold ${CELL*0.45}px Nunito`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('S',x+CELL/2,y+CELL/2+1);
+    }
+    if(type==='end'){
+      ctx.fillStyle=COLORS.end; ctx.fillRect(x,y,CELL,CELL);
+      ctx.fillStyle='#fff';
+      ctx.font=`bold ${CELL*0.38}px Nunito`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('F',x+CELL/2,y+CELL/2+1);
+    }
+    if(type==='star'){
+      const idx=mazeData.starCells.findIndex(s=>s.r===r&&s.c===c);
+      if(!starCollected[idx]){
+        const grd=ctx.createRadialGradient(x+CELL/2,y+CELL/2,0,x+CELL/2,y+CELL/2,CELL*0.7);
+        grd.addColorStop(0,COLORS.starGlow); grd.addColorStop(1,'transparent');
+        ctx.fillStyle=grd; ctx.fillRect(x-CELL*.2,y-CELL*.2,CELL*1.4,CELL*1.4);
+        ctx.font=`${CELL*.75}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('⭐',x+CELL/2,y+CELL/2+1);
+      }
+    }
+  }
+}
+
 // ==================== HOLD-TO-START ====================
 function isOnStart(e) {
   const rect = canvas.getBoundingClientRect();
@@ -735,15 +744,34 @@ function startHolding() {
     if(phase !== 'holding') return;
     holdRingPct = Math.min((now - holdStartTime) / HOLD_DURATION, 1);
     drawMaze(false);
+
+    // Draw countdown number on canvas over the start area
+    const sc = mazeData.startCells[1] || mazeData.startCells[0];
+    const cx = sc.c*CELL+CELL/2, cy = sc.r*CELL+CELL/2;
+    const countNum = Math.ceil((1 - holdRingPct) * 3);
+    ctx.font = `bold ${CELL*2}px Baloo 2,sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillText(countNum, cx+2, cy+2);
+    ctx.fillStyle = '#f9c74f';
+    ctx.fillText(countNum, cx, cy);
+
     if(holdRingPct < 1) {
       holdAnimFrame = requestAnimationFrame(animHold);
     } else {
-      // Held long enough — run countdown
+      // Done holding — show Läks! briefly then start
+      drawMaze(false);
+      ctx.font = `bold ${CELL*1.5}px Baloo 2,sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillText('Läks!', cx+2, cy+2);
+      ctx.fillStyle = '#43aa8b';
+      ctx.fillText('Läks!', cx, cy);
       phase = 'countdown';
-      runCountdown(() => {
+      setTimeout(() => {
         phase = 'playing';
         startTimer();
-      });
+      }, 600);
     }
   }
   holdAnimFrame = requestAnimationFrame(animHold);
@@ -873,24 +901,7 @@ function updateTimerUI(){
     :'linear-gradient(90deg,#f94144,#f4a024)';
 }
 
-// ==================== COUNTDOWN ====================
-function runCountdown(callback) {
-  const overlay = document.getElementById('countdown-overlay');
-  const numEl   = document.getElementById('countdown-number');
-  overlay.classList.remove('hidden');
-  let count=3;
-  numEl.className=''; numEl.textContent=count; void numEl.offsetWidth;
-  const tick = setInterval(()=>{
-    count--;
-    if(count>0){
-      numEl.className=''; void numEl.offsetWidth; numEl.textContent=count;
-    } else {
-      numEl.classList.add('go'); void numEl.offsetWidth; numEl.textContent='Läks!';
-      clearInterval(tick);
-      setTimeout(()=>{ overlay.classList.add('hidden'); callback(); }, 700);
-    }
-  }, 900);
-}
+// (countdown is now integrated into hold ring animation)
 
 // ==================== GAME FLOW ====================
 function loadLevel() {
