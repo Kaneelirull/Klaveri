@@ -455,9 +455,8 @@
     <div class="sidebar-footer">
       Lisa mänge serveris:<br>
       <code>/data/dosbox/</code><br>
-      (URL: <code>/cdn/dosbox/</code>)<br>
-      Toetab <code>.zip</code> ja <code>.jsdos</code><br>
-      <a href="https://dos.zone" target="_blank">dos.zone</a> — tasuta mängud
+      ⚠️ Ainult <code>.jsdos</code> failid!<br>
+      <a href="https://dos.zone" target="_blank">dos.zone</a> → lae alla .jsdos
     </div>
   </div>
 
@@ -470,23 +469,27 @@
       <div class="welcome-sub">Käivita vanu DOS-mänge otse brauseris.<br>Täielik WebAssembly emulaator.</div>
 
       <div class="path-card">
-        <div class="path-card-label">📁 Mängude kaust serveris</div>
+        <div class="path-card-label">📁 Kuidas mänge lisada</div>
         <code>/data/dosbox/</code>
-        <p>TrueNAS-is haagi see kaust oma salvestusega. Kopeeri sinna .zip või .jsdos failid — mängud ilmuvad automaatselt.</p>
+        <p>
+          Mine <a href="https://dos.zone" target="_blank" style="color:var(--cyan)">dos.zone</a>, otsi mäng, klõpsa <strong>Download</strong> → saad <code>.jsdos</code> faili.<br>
+          Kopeeri see serveris kausta <code>/data/dosbox/</code>.<br><br>
+          ⚠️ Tavaline <code>.zip</code> ei tööta — peab olema <code>.jsdos</code> bundle.
+        </p>
       </div>
 
       <div class="steps">
         <div class="step">
           <div class="step-num">1</div>
-          Lisa mängufailid serveris kausta <strong>/data/dosbox/</strong>
+          <a href="https://dos.zone" target="_blank" style="color:var(--cyan);font-weight:800">dos.zone</a> → otsi mäng → <strong>Download .jsdos</strong>
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          Klõpsa <strong>↻ Uuenda</strong> kui lisasid uusi faile
+          Kopeeri <code>.jsdos</code> fail serveris kausta <strong>/data/dosbox/</strong>
         </div>
         <div class="step">
           <div class="step-num">3</div>
-          Vali mäng vasakult ja naudi!
+          Klõpsa <strong>↻ Uuenda</strong> → vali mäng vasakult → mängi!
         </div>
       </div>
     </div>
@@ -592,7 +595,7 @@ async function loadGameList() {
 
     // nginx autoindex JSON: [{name, type, mtime, size}, ...]
     games = entries
-      .filter(e => e.type === 'file' && /\.(zip|jsdos)$/i.test(e.name))
+      .filter(e => e.type === 'file' && /\.jsdos$/i.test(e.name))
       .map(e => ({
         filename: e.name,
         name: fmtName(e.name),
@@ -678,14 +681,16 @@ async function launchGame(game) {
 
   try {
     const container = document.getElementById('dos-container');
-    dosInstance = await Dos(container, {
-      url: game.url,
-      onEvent: (event) => {
-        if (event === 'emu-ready' || event === 'bnd-play') {
-          document.getElementById('loading-overlay').classList.add('hidden');
-        }
-      }
+    // js-dos v8: Dos() creates the player, then ci is the command interface
+    const player = Dos(container, {
+      theme: 'dark',
+      renderAspect: '4/3',
     });
+    // .run() loads the bundle URL and returns the command interface
+    dosInstance = player;
+    const ci = await player.run(game.url);
+    // Hide loading once emulator is running
+    document.getElementById('loading-overlay').classList.add('hidden');
   } catch (err) {
     document.getElementById('loading-sub').textContent = 'Viga: ' + err.message;
     showError('Mängu käivitamine ebaõnnestus: ' + err.message);
@@ -695,7 +700,14 @@ async function launchGame(game) {
 
 async function stopDos() {
   if (dosInstance) {
-    try { await dosInstance.stop(); } catch {}
+    try {
+      // v8: stop() is on the player object
+      if (typeof dosInstance.stop === 'function') await dosInstance.stop();
+      else if (dosInstance.ciPromise) {
+        const ci = await dosInstance.ciPromise;
+        if (ci && typeof ci.exit === 'function') await ci.exit();
+      }
+    } catch {}
     dosInstance = null;
   }
   activeFile = null;
