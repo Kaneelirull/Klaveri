@@ -467,11 +467,18 @@ function addBalloon(color, x) {
     z-index:20;
   `;
   el.innerHTML = makeBalloonSVG(color.hex, SIZE);
+  el.dataset.colorId = color.id;
   stage.appendChild(el);
   liveBalloons.set(id, { el, colorId: color.id });
 
-  el.addEventListener('click', () => onBalloonClick(id, color, el));
-  el.addEventListener('mouseenter', () => { el.style.filter = 'brightness(1.25) drop-shadow(0 0 20px ' + color.hex + ')'; });
+  el.addEventListener('click', () => {
+    const currentColor = COLORS.find(c => c.id === el.dataset.colorId);
+    onBalloonClick(id, currentColor, el);
+  });
+  el.addEventListener('mouseenter', () => {
+    const c = COLORS.find(c => c.id === el.dataset.colorId);
+    el.style.filter = 'brightness(1.25) drop-shadow(0 0 20px ' + c.hex + ')';
+  });
   el.addEventListener('mouseleave', () => { el.style.filter = ''; });
 
   const startTime = performance.now();
@@ -501,21 +508,16 @@ function addBalloon(color, x) {
   requestAnimationFrame(frame);
 }
 
-// Swap a live balloon's color in-place (flash effect)
+// Swap a live balloon's color in-place
 function morphBalloon(id, el, newColor) {
   const SIZE = parseInt(el.querySelector('svg').getAttribute('width'));
-  el.style.transition = 'filter 0.2s';
   el.style.filter = 'brightness(2) blur(3px)';
-  // Update click handler by replacing element content and re-registering
   setTimeout(() => {
     if (!document.contains(el)) return;
     el.innerHTML = makeBalloonSVG(newColor.hex, SIZE);
+    el.dataset.colorId = newColor.id;
     el.style.filter = '';
     liveBalloons.set(id, { el, colorId: newColor.id });
-    // Re-register click with new color
-    el.onclick = () => onBalloonClick(id, newColor, el);
-    el.onmouseenter = () => { el.style.filter = 'brightness(1.25) drop-shadow(0 0 20px ' + newColor.hex + ')'; };
-    el.onmouseleave = () => { el.style.filter = ''; };
   }, 180);
 }
 
