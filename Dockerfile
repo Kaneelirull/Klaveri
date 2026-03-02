@@ -1,5 +1,9 @@
 FROM nginx:alpine
 
+# Run nginx worker processes as root so they can read
+# the TrueNAS volume mount at /data regardless of ownership
+RUN sed -i 's/^user\s.*/user root;/' /etc/nginx/nginx.conf || true
+
 # Copy site files
 COPY . /usr/share/nginx/html/
 
