@@ -681,16 +681,16 @@ async function launchGame(game) {
 
   try {
     const container = document.getElementById('dos-container');
-    // js-dos v8: Dos() creates the player, then ci is the command interface
-    const player = Dos(container, {
+    dosInstance = Dos(container, {
+      url: game.url,
       theme: 'dark',
       renderAspect: '4/3',
     });
-    // .run() loads the bundle URL and returns the command interface
-    dosInstance = player;
-    const ci = await player.run(game.url);
-    // Hide loading once emulator is running
-    document.getElementById('loading-overlay').classList.add('hidden');
+    // js-dos v8 renders its own UI and loading state
+    // hide our overlay shortly after — the emulator takes over
+    setTimeout(() => {
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }, 3000);
   } catch (err) {
     document.getElementById('loading-sub').textContent = 'Viga: ' + err.message;
     showError('Mängu käivitamine ebaõnnestus: ' + err.message);
@@ -701,12 +701,7 @@ async function launchGame(game) {
 async function stopDos() {
   if (dosInstance) {
     try {
-      // v8: stop() is on the player object
-      if (typeof dosInstance.stop === 'function') await dosInstance.stop();
-      else if (dosInstance.ciPromise) {
-        const ci = await dosInstance.ciPromise;
-        if (ci && typeof ci.exit === 'function') await ci.exit();
-      }
+      if (typeof dosInstance.stop === 'function') dosInstance.stop();
     } catch {}
     dosInstance = null;
   }
