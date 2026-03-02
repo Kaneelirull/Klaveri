@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOSBox — Klaveri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- js-dos v7 -->
+<link rel="stylesheet" href="https://v8.js-dos.com/latest/js-dos.css">
+<script src="https://v8.js-dos.com/latest/js-dos.js"></script>
+
+<style>
+  :root {
+    --bg:       #06060f;
+    --surface:  #0c0c1e;
+    --cyan:     #00f5ff;
+    --cyan-dim: rgba(0,245,255,0.12);
+    --cyan-glow:rgba(0,245,255,0.4);
+    --purple:   #b344ff;
+    --yellow:   #ffe135;
+    --text:     #e8eaff;
+    --muted:    rgba(232,234,255,0.5);
+    --border:   rgba(0,245,255,0.15);
+    --danger:   #ff4466;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ─────────────────────────────────── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    background: rgba(0,0,0,0.55);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 200;
+    backdrop-filter: blur(10px);
+  }
+  .topbar-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: var(--cyan);
+    text-shadow: 0 0 18px var(--cyan-glow);
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .topbar-title .dos-badge {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--purple);
+    background: rgba(179,68,255,0.12);
+    border: 1px solid rgba(179,68,255,0.3);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+  }
+  .back-btn {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 6px 16px;
+    border-radius: 20px;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    font-weight: 700;
+  }
+  .back-btn:hover {
+    color: var(--cyan);
+    border-color: var(--cyan);
+    background: var(--cyan-dim);
+  }
+
+  /* ── MAIN AREA ───────────────────────────────── */
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── GAME PICKER (left sidebar) ──────────────── */
+  .sidebar {
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow-y: auto;
+    position: relative;
+  }
+  /* subtle grid */
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.025) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+  }
+
+  .sidebar-header {
+    padding: 18px 18px 10px;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 800;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .game-list {
+    padding: 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+  }
+
+  .game-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+    position: relative;
+  }
+  .game-item:hover {
+    background: var(--cyan-dim);
+    border-color: var(--border);
+  }
+  .game-item.active {
+    background: var(--cyan-dim);
+    border-color: rgba(0,245,255,0.35);
+  }
+  .game-item .gi-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .game-item .gi-info { flex: 1; min-width: 0; }
+  .game-item .gi-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .game-item.active .gi-name { color: var(--cyan); }
+  .game-item .gi-meta {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+  .game-item .gi-arrow {
+    color: var(--cyan);
+    opacity: 0;
+    font-size: 0.9rem;
+    transition: opacity 0.15s;
+  }
+  .game-item:hover .gi-arrow,
+  .game-item.active .gi-arrow { opacity: 1; }
+
+  /* Upload zone */
+  .upload-zone {
+    margin: 10px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 18px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--cyan);
+    background: var(--cyan-dim);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .upload-zone .uz-icon { font-size: 1.8rem; }
+  .upload-zone .uz-text {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 700;
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+  }
+  .upload-zone .uz-sub {
+    font-size: 0.62rem;
+    color: rgba(232,234,255,0.3);
+    margin-top: 3px;
+  }
+
+  /* Sidebar footer */
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.62rem;
+    color: rgba(232,234,255,0.25);
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+  }
+  .sidebar-footer a {
+    color: rgba(0,245,255,0.4);
+    text-decoration: none;
+  }
+  .sidebar-footer a:hover { color: var(--cyan); }
+
+  /* ── EMULATOR AREA ───────────────────────────── */
+  .emu-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Landing / welcome screen */
+  .welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px;
+    text-align: center;
+    max-width: 480px;
+    animation: fadeUp 0.5s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .welcome-icon { font-size: 5rem; filter: drop-shadow(0 0 30px rgba(0,245,255,0.4)); }
+  .welcome-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    color: var(--cyan);
+    text-shadow: 0 0 30px var(--cyan-glow);
+  }
+  .welcome-sub {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .welcome-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+  .welcome-step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+  .welcome-step .ws-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--cyan-dim);
+    border: 1px solid rgba(0,245,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    color: var(--cyan);
+    flex-shrink: 0;
+  }
+
+  /* DOS container wrapper */
+  .dos-wrapper {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  .dos-wrapper.visible { display: block; }
+
+  /* js-dos renders inside #dos-container */
+  #dos-container {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Overlay controls bar (on top of dos canvas) */
+  .dos-controls {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: linear-gradient(to bottom, rgba(6,6,15,0.92), transparent);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .dos-wrapper:hover .dos-controls { opacity: 1; pointer-events: all; }
+  .dos-controls .dc-left {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: var(--cyan);
+    text-shadow: 0 0 12px var(--cyan-glow);
+  }
+  .dos-controls .dc-right { display: flex; gap: 8px; }
+  .dc-btn {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 5px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .dc-btn:hover { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-dim); }
+  .dc-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* Loading overlay */
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    z-index: 90;
+    transition: opacity 0.5s;
+  }
+  .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+  .loading-spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .loading-sub {
+    font-size: 0.72rem;
+    color: rgba(232,234,255,0.3);
+    letter-spacing: 0.05em;
+  }
+
+  /* Fullscreen notice */
+  .fs-hint {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    font-size: 0.65rem;
+    color: rgba(232,234,255,0.25);
+    letter-spacing: 0.08em;
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  /* Scrollbar */
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-title">
+    🖥️ DOSBox
+    <span class="dos-badge">js-dos · WebAssembly</span>
+  </div>
+  <a class="back-btn" href="../../index.html">← Tagasi</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">Mängud</div>
+
+    <div class="game-list" id="game-list">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Upload zone -->
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".zip,.jsdos" multiple>
+      <div class="uz-icon">📂</div>
+      <div class="uz-text">Lisa mäng</div>
+      <div class="uz-sub">.zip või .jsdos fail</div>
+    </div>
+
+    <div class="sidebar-footer">
+      Töötab brauseris — <a href="https://js-dos.com" target="_blank">js-dos v8</a><br>
+      Lae üles .zip või .jsdos pakette.<br>
+      Mängud salvestatakse brauserisse.
+    </div>
+  </div>
+
+  <!-- EMULATOR AREA -->
+  <div class="emu-area" id="emu-area">
+
+    <!-- Welcome screen -->
+    <div class="welcome-screen" id="welcome-screen">
+      <div class="welcome-icon">🖥️</div>
+      <div class="welcome-title">DOSBox</div>
+      <div class="welcome-sub">
+        Käivita vanu DOS-mänge otse brauseris.<br>
+        Täielik WebAssembly emulaator — ei vaja installimist.
+      </div>
+      <div class="welcome-arrows">
+        <div class="welcome-step">
+          <div class="ws-num">1</div>
+          Klõpsa <strong>Lisa mäng</strong> ja lae üles .zip-fail koos DOS-mänguga
+        </div>
+        <div class="welcome-step">
+          <div class="ws-num">2</div>
+          Vali mäng vasakult nimekirjast
+        </div>
+        <div class="welcome-step">
+          <div class="ws-num">3</div>
+          Mäng käivitub automaatselt — naudi!
+        </div>
+      </div>
+    </div>
+
+    <!-- DOS wrapper -->
+    <div class="dos-wrapper" id="dos-wrapper">
+      <div class="dos-controls">
+        <div class="dc-left" id="dc-game-name">—</div>
+        <div class="dc-right">
+          <button class="dc-btn" id="btn-fullscreen" title="Täisekraan">⛶ Täisekraan</button>
+          <button class="dc-btn danger" id="btn-stop" title="Peata emulaator">✕ Peata</button>
+        </div>
+      </div>
+
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Laadimine…</div>
+        <div class="loading-sub" id="loading-sub">DOS-emulaator käivitub</div>
+      </div>
+
+      <div id="dos-container"></div>
+      <div class="fs-hint">Hover ülespoole → juhtelemendid</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ======================================================
+// GAME REGISTRY (stored in localStorage)
+// ======================================================
+const STORAGE_KEY = 'klaveri_dosbox_games';
+
+function loadRegistry() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveRegistry(reg) {
+  // We only save metadata; the actual blob is stored in IndexedDB
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(reg));
+}
+
+// IndexedDB for storing game blobs
+const DB_NAME = 'klaveri-dosbox';
+const DB_STORE = 'games';
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore(DB_STORE, { keyPath: 'id' });
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function saveBlob(id, blob) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put({ id, blob });
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function loadBlob(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(id);
+    req.onsuccess = () => resolve(req.result?.blob || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function deleteBlob(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(id);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ======================================================
+// ICONS based on name guessing
+// ======================================================
+const ICON_MAP = [
+  [/doom|quake|wolf/i,     '🔫'],
+  [/mario|jump|platform/i, '🍄'],
+  [/monkey|lucasarts/i,    '🐒'],
+  [/prince/i,              '🗡️'],
+  [/tetris|puzzle/i,       '🧩'],
+  [/space|galaxy|star/i,   '🌌'],
+  [/car|race|nascar/i,     '🏎️'],
+  [/sonic|hedgehog/i,      '💨'],
+  [/worms|lemmings/i,      '🐛'],
+  [/cricket|sport/i,       '🏏'],
+];
+function guessIcon(name) {
+  for (const [re, icon] of ICON_MAP) if (re.test(name)) return icon;
+  return '🎮';
+}
+
+// ======================================================
+// UI RENDERING
+// ======================================================
+let registry = [];
+let activeId = null;
+let dosInstance = null;
+
+function renderList() {
+  const list = document.getElementById('game-list');
+  list.innerHTML = '';
+  if (registry.length === 0) {
+    list.innerHTML = `<div style="font-size:0.72rem;color:var(--muted);padding:12px 14px;letter-spacing:0.05em">
+      Mänge pole veel lisatud.</div>`;
+    return;
+  }
+  for (const game of registry) {
+    const item = document.createElement('div');
+    item.className = 'game-item' + (game.id === activeId ? ' active' : '');
+    item.innerHTML = `
+      <div class="gi-icon">${game.icon}</div>
+      <div class="gi-info">
+        <div class="gi-name">${escHtml(game.name)}</div>
+        <div class="gi-meta">${escHtml(game.size)}</div>
+      </div>
+      <div class="gi-arrow">▶</div>
+    `;
+    item.addEventListener('click', () => launchGame(game.id));
+    // Long-press or right-click to delete
+    item.addEventListener('contextmenu', e => { e.preventDefault(); confirmDelete(game); });
+    list.appendChild(item);
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(0) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+// ======================================================
+// ADD GAME (file upload)
+// ======================================================
+const fileInput = document.getElementById('file-input');
+const uploadZone = document.getElementById('upload-zone');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => {
+  handleFiles(fileInput.files);
+  fileInput.value = '';
+});
+
+async function handleFiles(files) {
+  for (const file of files) {
+    if (!file.name.match(/\.(zip|jsdos)$/i)) continue;
+    const id = 'game_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const name = file.name.replace(/\.(zip|jsdos)$/i,'').replace(/[-_]/g,' ');
+    await saveBlob(id, file);
+    registry.push({ id, name, icon: guessIcon(name), size: fmtSize(file.size), filename: file.name });
+    saveRegistry(registry);
+    renderList();
+  }
+}
+
+// ======================================================
+// LAUNCH GAME
+// ======================================================
+async function launchGame(id) {
+  if (activeId === id) return;
+
+  // Stop existing
+  await stopDos();
+
+  activeId = id;
+  renderList();
+
+  const game = registry.find(g => g.id === id);
+  if (!game) return;
+
+  // Show dos wrapper
+  document.getElementById('welcome-screen').style.display = 'none';
+  const wrapper = document.getElementById('dos-wrapper');
+  wrapper.classList.add('visible');
+  document.getElementById('dc-game-name').textContent = game.name;
+  document.getElementById('loading-overlay').classList.remove('hidden');
+  document.getElementById('loading-sub').textContent = `${game.name} · ${game.size}`;
+
+  const blob = await loadBlob(id);
+  if (!blob) { alert('Faili ei leitud.'); return; }
+
+  const url = URL.createObjectURL(blob);
+
+  try {
+    const container = document.getElementById('dos-container');
+    // Use js-dos v8 API
+    dosInstance = await Dos(container, {
+      url: url,
+      onEvent: (event) => {
+        if (event === 'emu-ready' || event === 'bnd-play') {
+          document.getElementById('loading-overlay').classList.add('hidden');
+        }
+      }
+    });
+  } catch(err) {
+    document.getElementById('loading-sub').textContent = 'Viga: ' + err.message;
+    console.error(err);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function stopDos() {
+  if (dosInstance) {
+    try { await dosInstance.stop(); } catch {}
+    dosInstance = null;
+  }
+  activeId = null;
+  document.getElementById('dos-container').innerHTML = '';
+  document.getElementById('dos-wrapper').classList.remove('visible');
+  document.getElementById('welcome-screen').style.display = '';
+  renderList();
+}
+
+// ======================================================
+// CONTROLS
+// ======================================================
+document.getElementById('btn-fullscreen').addEventListener('click', () => {
+  const el = document.getElementById('dos-container');
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+});
+
+document.getElementById('btn-stop').addEventListener('click', () => stopDos());
+
+// ======================================================
+// DELETE
+// ======================================================
+function confirmDelete(game) {
+  if (!confirm(`Kustuta "${game.name}"?`)) return;
+  deleteGame(game.id);
+}
+
+async function deleteGame(id) {
+  if (activeId === id) await stopDos();
+  await deleteBlob(id);
+  registry = registry.filter(g => g.id !== id);
+  saveRegistry(registry);
+  renderList();
+}
+
+// ======================================================
+// INIT
+// ======================================================
+(async () => {
+  await openDB();
+  registry = loadRegistry();
+  renderList();
+})();
+</script>
+</body>
+</html>
