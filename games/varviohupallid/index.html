@@ -98,7 +98,7 @@ canvas#bg {
   pointer-events: none;
 }
 #hud > * { pointer-events: all; }
-#back-btn {
+#back-btn, .back-btn {
   font-family: 'Fredoka One', cursive;
   font-size: 0.95rem;
   background: rgba(255,255,255,0.08);
@@ -109,8 +109,12 @@ canvas#bg {
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s;
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  z-index: 60;
 }
-#back-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+#back-btn:hover, .back-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
 #score-pill {
   font-family: 'Fredoka One', cursive;
   font-size: 1.5rem;
@@ -220,7 +224,7 @@ canvas#bg {
   color: rgba(255,255,255,0.8);
   border: 1px solid rgba(255,255,255,0.2);
 }
-.end-btn-lang:hover { background: rgba(255,255,255,0.2); }
+.end-btns .back-btn, .end-btns a.end-btn { position: static; }
 </style>
 </head>
 <body>
@@ -229,7 +233,7 @@ canvas#bg {
 
 <!-- LANGUAGE SELECT -->
 <div class="screen" id="lang-screen">
-  <a id="back-btn-lang" href="../../index.html" style="position:absolute;top:18px;left:20px;font-family:'Fredoka One',cursive;font-size:0.95rem;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.6);border-radius:999px;padding:7px 18px;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(255,255,255,0.6)'">← Tagasi</a>
+  <a class="back-btn" href="../../index.html">← Tagasi</a>
   <div class="lang-title">
     🎈 Värviõhupallid
     <span class="sub">Vali keel · Choose language · Välj språk</span>
@@ -257,7 +261,7 @@ canvas#bg {
 <div class="screen" id="game-screen">
   <div id="prog-wrap"><div id="prog-bar" style="width:0"></div></div>
   <div id="hud">
-    <a id="back-btn" href="../../index.html">← Tagasi</a>
+    <a id="back-btn" class="back-btn" href="../../index.html">← Tagasi</a>
     <div id="score-pill">⭐ 0 / 15</div>
     <div id="timer-pill">⏱ 30</div>
   </div>
