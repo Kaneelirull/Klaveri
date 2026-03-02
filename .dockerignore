@@ -1,3 +1,7 @@
 .git
 *.DS_Store
 README.md
+
+# /data is a runtime volume mount — not baked into the image
+# The container expects it mounted at /data on TrueNAS
+data/

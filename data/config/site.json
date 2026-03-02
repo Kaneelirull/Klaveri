@@ -1,0 +1,7 @@
+{
+  "_comment": "Klaveri site config — edit freely, reloaded on each page visit",
+  "siteName": "Mängud",
+  "siteSubtitle": "Hariduslikud mängud lastele",
+  "accentColor": "#e8ff47",
+  "showComingSoon": true
+}

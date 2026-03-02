@@ -1,2 +1,6 @@
 .git/
 *.DS_Store
+
+# Don't commit actual DOS game files — these live on the server volume
+data/dosbox/*.zip
+data/dosbox/*.jsdos
