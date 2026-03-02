@@ -455,8 +455,8 @@
     <div class="sidebar-footer">
       Lisa mänge serveris:<br>
       <code>/data/dosbox/</code><br>
-      ⚠️ Ainult <code>.jsdos</code> failid!<br>
-      <a href="https://dos.zone" target="_blank">dos.zone</a> → lae alla .jsdos
+      Toetab <code>.jsdos</code> ja <code>.zip</code><br>
+      <a href="https://dos.zone" target="_blank">dos.zone</a> — tasuta mängud
     </div>
   </div>
 
@@ -472,24 +472,24 @@
         <div class="path-card-label">📁 Kuidas mänge lisada</div>
         <code>/data/dosbox/</code>
         <p>
-          Mine <a href="https://dos.zone" target="_blank" style="color:var(--cyan)">dos.zone</a>, otsi mäng, klõpsa <strong>Download</strong> → saad <code>.jsdos</code> faili.<br>
-          Kopeeri see serveris kausta <code>/data/dosbox/</code>.<br><br>
-          ⚠️ Tavaline <code>.zip</code> ei tööta — peab olema <code>.jsdos</code> bundle.
+          Kopeeri <code>.jsdos</code> või <code>.zip</code> failid serveris kausta <code>/data/dosbox/</code>.<br><br>
+          <strong>.jsdos</strong> — käivitub automaatselt (<a href="https://dos.zone" target="_blank" style="color:var(--cyan)">dos.zone</a>)<br>
+          <strong>.zip</strong> — saad DOS-terminali, kirjuta <code>DIR</code> ja käivita <code>GAME.EXE</code>
         </p>
       </div>
 
       <div class="steps">
         <div class="step">
           <div class="step-num">1</div>
-          <a href="https://dos.zone" target="_blank" style="color:var(--cyan);font-weight:800">dos.zone</a> → otsi mäng → <strong>Download .jsdos</strong>
+          Kopeeri <code>.jsdos</code> või <code>.zip</code> fail serveris kausta <strong>/data/dosbox/</strong>
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          Kopeeri <code>.jsdos</code> fail serveris kausta <strong>/data/dosbox/</strong>
+          Klõpsa <strong>↻ Uuenda</strong> → vali mäng vasakult
         </div>
         <div class="step">
           <div class="step-num">3</div>
-          Klõpsa <strong>↻ Uuenda</strong> → vali mäng vasakult → mängi!
+          <code>.zip</code> puhul kirjuta <code>DIR</code> ja käivita <code>GAME.EXE</code>
         </div>
       </div>
     </div>
@@ -595,7 +595,7 @@ async function loadGameList() {
 
     // nginx autoindex JSON: [{name, type, mtime, size}, ...]
     games = entries
-      .filter(e => e.type === 'file' && /\.jsdos$/i.test(e.name))
+      .filter(e => e.type === 'file' && /\.(zip|jsdos)$/i.test(e.name))
       .map(e => ({
         filename: e.name,
         name: fmtName(e.name),
