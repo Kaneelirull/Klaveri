@@ -455,6 +455,7 @@
     <div class="sidebar-footer">
       Lisa mänge serveris:<br>
       <code>/data/dosbox/</code><br>
+      (URL: <code>/cdn/dosbox/</code>)<br>
       Toetab <code>.zip</code> ja <code>.jsdos</code><br>
       <a href="https://dos.zone" target="_blank">dos.zone</a> — tasuta mängud
     </div>
@@ -516,7 +517,7 @@
 // =====================================================
 // CONFIG
 // =====================================================
-const DATA_PATH = '/data/dosbox/';
+const DATA_PATH = '/cdn/dosbox/';
 
 // =====================================================
 // ICON GUESSER
@@ -585,7 +586,7 @@ async function loadGameList() {
       cache: 'no-store'
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} — ${res.statusText || 'viga'}`);
 
     const entries = await res.json();
 
@@ -619,7 +620,7 @@ function renderList(fetchFailed = false) {
 
   if (fetchFailed) {
     list.innerHTML = `<div class="list-state">
-      Ei saanud <code>/data/dosbox/</code> lugeda.<br><br>
+      Ei saanud <code>/cdn/dosbox/</code> lugeda.<br><br>
       Kontrolli, et TrueNAS-is on <code>/data</code> kaust haagitud.
     </div>`;
     return;
