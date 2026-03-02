@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkunaator 🚀</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06060f;
+    --panel-left: #0c0c1e;
+    --panel-right: #080818;
+    --cyan: #00f5ff;
+    --cyan-dim: rgba(0,245,255,0.15);
+    --cyan-glow: rgba(0,245,255,0.4);
+    --purple: #b344ff;
+    --purple-dim: rgba(179,68,255,0.15);
+    --yellow: #ffe135;
+    --green: #39ff8f;
+    --red: #ff4466;
+    --text: #e8eaff;
+    --muted: rgba(232,234,255,0.5);
+    --border: rgba(0,245,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .topbar-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: var(--cyan);
+    text-shadow: 0 0 20px var(--cyan-glow);
+    letter-spacing: 0.05em;
+  }
+  .topbar-title span { color: var(--purple); }
+  .back-btn {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 5px 14px;
+    border-radius: 20px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .back-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* LEFT PANEL */
+  .left-panel {
+    width: 37%;
+    background: var(--panel-left);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 18px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* Subtle grid bg left */
+  .left-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .level-badge {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    background: var(--cyan-dim);
+    border: 1px solid rgba(0,245,255,0.3);
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+
+  .calc-display {
+    background: rgba(0,0,0,0.5);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 28px;
+    text-align: center;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .calc-display::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    animation: scanline 3s ease-in-out infinite;
+  }
+  @keyframes scanline {
+    0%,100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .calc-question {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3.2rem;
+    color: var(--text);
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    text-shadow: 0 0 30px rgba(232,234,255,0.3);
+    transition: transform 0.15s;
+  }
+  .calc-question.shake {
+    animation: shake 0.4s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    15% { transform: translateX(-8px); }
+    35% { transform: translateX(8px); }
+    55% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  .calc-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Input area */
+  .input-area {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .answer-input {
+    flex: 1;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 20px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    color: var(--text);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    caret-color: var(--cyan);
+    min-width: 0;
+  }
+  .answer-input:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px var(--cyan-dim), inset 0 0 20px rgba(0,245,255,0.05);
+  }
+  .answer-input.wrong {
+    border-color: var(--red) !important;
+    box-shadow: 0 0 0 3px rgba(255,68,102,0.2) !important;
+  }
+  .answer-input.correct {
+    border-color: var(--green) !important;
+    box-shadow: 0 0 0 3px rgba(57,255,143,0.2) !important;
+  }
+  .answer-input:disabled {
+    opacity: 0.6;
+  }
+
+  .fire-btn {
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    border: none;
+    border-radius: 14px;
+    padding: 14px 22px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: #000;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+    box-shadow: 0 4px 20px rgba(0,245,255,0.3);
+    flex-shrink: 0;
+  }
+  .fire-btn:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 28px rgba(0,245,255,0.5);
+  }
+  .fire-btn:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+  .fire-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+  .stat-box {
+    flex: 1;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .stat-value {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    line-height: 1.1;
+    color: var(--cyan);
+    text-shadow: 0 0 15px var(--cyan-glow);
+  }
+  .stat-value.streak-fire { color: var(--yellow); text-shadow: 0 0 15px rgba(255,225,53,0.5); }
+
+  /* Level selector */
+  .level-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .lvl-btn {
+    flex: 1;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 4px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.85rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .lvl-btn small { display: block; font-family: 'Nunito', sans-serif; font-size: 0.6rem; letter-spacing: 0.05em; }
+  .lvl-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  .lvl-btn.active { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+
+  /* Highscore */
+  .hs-line {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .hs-line span { color: var(--yellow); font-weight: 800; }
+
+  /* Upgrade prompt */
+  .upgrade-toast {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: linear-gradient(135deg, var(--purple-dim), var(--cyan-dim));
+    border: 1px solid var(--cyan);
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    text-align: center;
+    transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+    z-index: 5;
+    cursor: pointer;
+  }
+  .upgrade-toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* RIGHT PANEL - SPACE */
+  .right-panel {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* Stars canvas */
+  #space-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Asteroid */
+  .asteroid {
+    position: absolute;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: box-shadow 0.3s;
+    user-select: none;
+    pointer-events: none;
+  }
+  .asteroid .ast-num {
+    font-family: 'Fredoka One', cursive;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .asteroid.target-pulse {
+    animation: targetPulse 2s ease-in-out infinite;
+  }
+
+  /* Rocket */
+  #rocket {
+    position: absolute;
+    font-size: 2rem;
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 8px var(--cyan));
+    display: none;
+  }
+
+  /* Particles container */
+  #particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 60;
+  }
+
+  /* Exhaust trail */
+  .exhaust {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    pointer-events: none;
+    z-index: 49;
+    animation: exhaustFade 0.6s ease forwards;
+  }
+  @keyframes exhaustFade {
+    0% { opacity: 0.8; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.2); }
+  }
+
+  /* Explosion */
+  .explosion-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid var(--yellow);
+    pointer-events: none;
+    z-index: 55;
+    transform: translate(-50%, -50%);
+    animation: explodeRing 0.6s ease forwards;
+  }
+  @keyframes explodeRing {
+    0% { width: 10px; height: 10px; opacity: 1; }
+    100% { width: 160px; height: 160px; opacity: 0; }
+  }
+
+  .spark {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 56;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Score pop */
+  .score-pop {
+    position: absolute;
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: var(--yellow);
+    pointer-events: none;
+    z-index: 70;
+    text-shadow: 0 0 20px rgba(255,225,53,0.8);
+    transform: translate(-50%, -50%);
+    animation: scorePop 1.2s ease forwards;
+  }
+  @keyframes scorePop {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    30% { transform: translate(-50%, -50%) scale(1.2); }
+    70% { opacity: 1; transform: translate(-50%, calc(-50% - 50px)) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, calc(-50% - 80px)) scale(0.8); }
+  }
+
+  /* Star shimmer */
+  @keyframes starShimmer {
+    0%,100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-title">🚀 KALK<span>U</span>NAATOR</div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <div style="font-size:0.72rem;color:var(--muted);letter-spacing:0.08em" id="topbar-hs">Rekord: <span id="hs-val" style="color:var(--yellow);font-weight:800">0</span></div>
+    <a class="back-btn" href="../../index.html">← Tagasi</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+
+    <div class="level-badge" id="level-badge">Tase 1 — Algaja</div>
+
+    <!-- Calculation display -->
+    <div class="calc-display">
+      <div class="calc-question" id="calc-question">3 + 4 = ?</div>
+      <div class="calc-hint">Leia vastus ja tulista asteroid!</div>
+    </div>
+
+    <!-- Input + fire -->
+    <div class="input-area">
+      <input 
+        type="number" 
+        id="answer-input" 
+        class="answer-input" 
+        placeholder="?" 
+        min="-999" max="999"
+        autocomplete="off"
+      >
+      <button class="fire-btn" id="fire-btn" title="Tulista! (Enter)">🚀</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-label">Skoor</div>
+        <div class="stat-value" id="score-display">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Seeria 🔥</div>
+        <div class="stat-value" id="streak-display">0</div>
+      </div>
+    </div>
+
+    <!-- Level selector -->
+    <div class="level-row">
+      <button class="lvl-btn active" data-level="1" id="lvl-1">
+        Tase 1<small>0–20 · + −</small>
+      </button>
+      <button class="lvl-btn" data-level="2" id="lvl-2">
+        Tase 2<small>0–100 · + −</small>
+      </button>
+      <button class="lvl-btn" data-level="3" id="lvl-3">
+        Tase 3<small>± · 3 arvu</small>
+      </button>
+    </div>
+
+    <div class="hs-line">Parim rekord: <span id="hs-display">0</span> punkti</div>
+
+    <!-- Upgrade toast -->
+    <div class="upgrade-toast" id="upgrade-toast">
+      ⭐ Tase üles? Klõpsa siia!
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel" id="right-panel">
+    <canvas id="space-canvas"></canvas>
+    <div id="rocket">🚀</div>
+    <div id="particles"></div>
+  </div>
+
+</div>
+
+<script>
+// =====================================================
+// STATE
+// =====================================================
+const state = {
+  level: 1,
+  score: 0,
+  streak: 0,
+  correctInLevel: 0,
+  highScore: parseInt(localStorage.getItem('kalkunaator_hs') || '0'),
+  highLevel: parseInt(localStorage.getItem('kalkunaator_hl') || '1'),
+  calc: null,
+  asteroids: [],
+  rocketActive: false,
+  rocketX: 0, rocketY: 0,
+  targetX: 0, targetY: 0,
+  targetAsteroidId: null,
+  locked: false,
+  animFrame: null
+};
+
+const LEVEL_CONFIG = {
+  1: { min: 0, max: 20, terms: 2, ops: ['+','-'], asteroidCount: [5,7], speed: 0.3, name: 'Algaja' },
+  2: { min: 0, max: 100, terms: 2, ops: ['+','-'], asteroidCount: [7,10], speed: 0.55, name: 'Harjutaja' },
+  3: { min: -50, max: 150, terms: 3, ops: ['+','-'], asteroidCount: [8,10], speed: 0.75, name: 'Matemaatik' }
+};
+
+// =====================================================
+// CANVAS STARS
+// =====================================================
+const canvas = document.getElementById('space-canvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+let panelW, panelH;
+
+function resizeCanvas() {
+  const panel = document.getElementById('right-panel');
+  panelW = panel.offsetWidth;
+  panelH = panel.offsetHeight;
+  canvas.width = panelW;
+  canvas.height = panelH;
+  initStars();
+}
+
+function initStars() {
+  stars = [];
+  const count = Math.floor(panelW * panelH / 3000);
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * panelW,
+      y: Math.random() * panelH,
+      r: Math.random() * 1.5 + 0.3,
+      phase: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.02 + 0.005,
+      color: Math.random() < 0.2 ? '#b8c4ff' : '#ffffff'
+    });
+  }
+}
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, panelW, panelH);
+  for (const s of stars) {
+    const alpha = 0.3 + 0.5 * (0.5 + 0.5 * Math.sin(s.phase + t * s.speed));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = alpha;
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// =====================================================
+// ASTEROID DOM ELEMENTS
+// =====================================================
+let asteroidEls = {};
+
+function randHSL(isTarget) {
+  if (isTarget) return `hsl(${Math.floor(Math.random()*60+180)}, 80%, 55%)`; // blue-cyan for target
+  const hues = [280, 320, 200, 260];
+  const h = hues[Math.floor(Math.random()*hues.length)];
+  return `hsl(${h}, 60%, 45%)`;
+}
+
+function createAsteroidEl(ast) {
+  const el = document.createElement('div');
+  el.className = 'asteroid';
+  el.id = 'ast-' + ast.id;
+  const size = ast.size;
+  el.style.width = size + 'px';
+  el.style.height = size + 'px';
+  const color = randHSL(ast.isTarget);
+  el.style.background = `radial-gradient(circle at 35% 30%, ${color}, hsl(from ${color} h s 20%))`;
+  el.style.boxShadow = ast.isTarget
+    ? `0 0 18px 4px rgba(0,245,255,0.4), inset 0 0 14px rgba(255,255,255,0.15)`
+    : `0 0 10px 2px rgba(179,68,255,0.3), inset 0 0 10px rgba(255,255,255,0.1)`;
+  const numEl = document.createElement('div');
+  numEl.className = 'ast-num';
+  numEl.style.fontSize = (size * 0.35) + 'px';
+  numEl.textContent = ast.value;
+  el.appendChild(numEl);
+  el.style.left = ast.x + 'px';
+  el.style.top = ast.y + 'px';
+  document.getElementById('right-panel').appendChild(el);
+  asteroidEls[ast.id] = el;
+}
+
+function removeAsteroidEl(id) {
+  const el = asteroidEls[id];
+  if (el) { el.remove(); delete asteroidEls[id]; }
+}
+
+function clearAllAsteroids() {
+  for (const id in asteroidEls) { asteroidEls[id].remove(); }
+  asteroidEls = {};
+  state.asteroids = [];
+}
+
+// =====================================================
+// GAME LOGIC
+// =====================================================
+function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+function generateCalc(level) {
+  const cfg = LEVEL_CONFIG[level];
+  let terms, ops, result;
+  let attempts = 0;
+  do {
+    attempts++;
+    const numTerms = cfg.terms === 2 ? 2 : randInt(2, 3);
+    terms = [];
+    ops = [];
+    terms.push(randInt(cfg.min < 0 ? 0 : cfg.min, Math.min(20, cfg.max)));
+    for (let i = 1; i < numTerms; i++) {
+      ops.push(cfg.ops[Math.floor(Math.random() * cfg.ops.length)]);
+      terms.push(randInt(0, Math.min(20, cfg.max - cfg.min)));
+    }
+    result = terms[0];
+    for (let i = 0; i < ops.length; i++) {
+      result = ops[i] === '+' ? result + terms[i+1] : result - terms[i+1];
+    }
+  } while (result < cfg.min || result > cfg.max && attempts < 50);
+  return { terms, ops, result };
+}
+
+function calcToString(calc) {
+  let s = String(calc.terms[0]);
+  for (let i = 0; i < calc.ops.length; i++) {
+    s += ' ' + calc.ops[i] + ' ' + calc.terms[i+1];
+  }
+  s += ' = ?';
+  return s;
+}
+
+function generateAsteroids(result, level) {
+  const cfg = LEVEL_CONFIG[level];
+  const count = randInt(cfg.asteroidCount[0], cfg.asteroidCount[1]);
+  const asts = [];
+  const usedVals = new Set([result]);
+  const targetIdx = Math.floor(Math.random() * count);
+
+  for (let i = 0; i < count; i++) {
+    let val;
+    if (i === targetIdx) {
+      val = result;
+    } else {
+      let v, tries = 0;
+      do {
+        v = randInt(cfg.min, cfg.max);
+        tries++;
+      } while (usedVals.has(v) && tries < 100);
+      val = v;
+      usedVals.add(v);
+    }
+    const size = randInt(64, 92);
+    const margin = size + 20;
+    asts.push({
+      id: Math.random().toString(36).slice(2),
+      x: randInt(margin, panelW - margin * 2),
+      y: randInt(margin, panelH - margin * 2),
+      vx: (Math.random() - 0.5) * cfg.speed * 2,
+      vy: (Math.random() - 0.5) * cfg.speed * 2,
+      value: val,
+      isTarget: i === targetIdx,
+      size: size
+    });
+  }
+  return asts;
+}
+
+function newRound() {
+  clearAllAsteroids();
+  state.calc = generateCalc(state.level);
+  document.getElementById('calc-question').textContent = calcToString(state.calc);
+  state.asteroids = generateAsteroids(state.calc.result, state.level);
+  for (const ast of state.asteroids) createAsteroidEl(ast);
+  state.locked = false;
+  const input = document.getElementById('answer-input');
+  input.value = '';
+  input.disabled = false;
+  input.className = 'answer-input';
+  input.focus();
+  updateFireBtn();
+}
+
+function updateFireBtn() {
+  const inp = document.getElementById('answer-input');
+  const btn = document.getElementById('fire-btn');
+  const val = inp.value.trim();
+  btn.disabled = state.locked || val === '' || isNaN(parseInt(val));
+}
+
+function tryFire() {
+  if (state.locked) return;
+  const inp = document.getElementById('answer-input');
+  const val = parseInt(inp.value.trim());
+  if (isNaN(val)) return;
+
+  if (val === state.calc.result) {
+    // Correct!
+    state.locked = true;
+    inp.disabled = true;
+    inp.className = 'answer-input correct';
+    document.getElementById('fire-btn').disabled = true;
+
+    const targetAst = state.asteroids.find(a => a.isTarget);
+    if (!targetAst) { newRound(); return; }
+
+    launchRocket(targetAst);
+  } else {
+    // Wrong
+    inp.className = 'answer-input wrong';
+    document.getElementById('calc-question').classList.add('shake');
+    setTimeout(() => {
+      inp.className = 'answer-input';
+      document.getElementById('calc-question').classList.remove('shake');
+    }, 500);
+    state.streak = 0;
+    updateStats();
+  }
+}
+
+// =====================================================
+// ROCKET & EXPLOSION
+// =====================================================
+const rocketEl = document.getElementById('rocket');
+
+function launchRocket(targetAst) {
+  state.rocketActive = true;
+  // Start from bottom center of right panel
+  state.rocketX = panelW * 0.4;
+  state.rocketY = panelH + 30;
+  state.targetX = targetAst.x + targetAst.size / 2;
+  state.targetY = targetAst.y + targetAst.size / 2;
+  state.targetAsteroidId = targetAst.id;
+  rocketEl.style.display = 'block';
+  rocketEl.style.left = state.rocketX + 'px';
+  rocketEl.style.top = state.rocketY + 'px';
+}
+
+let lastExhaust = 0;
+function updateRocket(ts) {
+  if (!state.rocketActive) return;
+  const dx = state.targetX - state.rocketX;
+  const dy = state.targetY - state.rocketY;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const speed = 8;
+
+  // Rotate rocket toward target
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+  rocketEl.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+
+  if (ts - lastExhaust > 40) {
+    spawnExhaust(state.rocketX, state.rocketY);
+    lastExhaust = ts;
+  }
+
+  if (dist < 20) {
+    // HIT!
+    state.rocketActive = false;
+    rocketEl.style.display = 'none';
+    explode(state.targetX, state.targetY);
+    return;
+  }
+
+  const nx = state.rocketX + (dx / dist) * speed;
+  const ny = state.rocketY + (dy / dist) * speed;
+  state.rocketX = nx;
+  state.rocketY = ny;
+  rocketEl.style.left = nx + 'px';
+  rocketEl.style.top = ny + 'px';
+}
+
+function spawnExhaust(x, y) {
+  const panel = document.getElementById('right-panel');
+  const el = document.createElement('div');
+  el.className = 'exhaust';
+  el.style.left = (x - 3) + 'px';
+  el.style.top = (y - 3) + 'px';
+  el.style.background = Math.random() < 0.5 ? 'var(--cyan)' : 'var(--purple)';
+  panel.appendChild(el);
+  setTimeout(() => el.remove(), 600);
+}
+
+function explode(x, y) {
+  const panel = document.getElementById('right-panel');
+
+  // Remove asteroid el
+  removeAsteroidEl(state.targetAsteroidId);
+
+  // Ring
+  const ring = document.createElement('div');
+  ring.className = 'explosion-ring';
+  ring.style.left = x + 'px';
+  ring.style.top = y + 'px';
+  panel.appendChild(ring);
+  setTimeout(() => ring.remove(), 700);
+
+  // Sparks
+  const colors = ['var(--yellow)', 'var(--cyan)', 'var(--green)', '#ff8c00', '#fff'];
+  for (let i = 0; i < 18; i++) {
+    const spark = document.createElement('div');
+    spark.className = 'spark';
+    spark.style.left = x + 'px';
+    spark.style.top = y + 'px';
+    const angle = (i / 18) * Math.PI * 2;
+    const dist = randInt(40, 100);
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist;
+    const sz = randInt(5, 12);
+    spark.style.width = sz + 'px';
+    spark.style.height = sz + 'px';
+    spark.style.background = colors[i % colors.length];
+    spark.style.boxShadow = `0 0 8px ${colors[i % colors.length]}`;
+    spark.style.animation = 'none';
+    panel.appendChild(spark);
+    spark.animate([
+      { transform: `translate(-50%,-50%) translate(0,0) scale(1)`, opacity: 1 },
+      { transform: `translate(-50%,-50%) translate(${tx}px,${ty}px) scale(0)`, opacity: 0 }
+    ], { duration: 700, easing: 'ease-out', fill: 'forwards' }).onfinish = () => spark.remove();
+  }
+
+  // Score pop
+  const pop = document.createElement('div');
+  pop.className = 'score-pop';
+  pop.style.left = x + 'px';
+  pop.style.top = y + 'px';
+  pop.textContent = '+10';
+  panel.appendChild(pop);
+  setTimeout(() => pop.remove(), 1200);
+
+  // Update score
+  state.score += 10;
+  state.streak++;
+  state.correctInLevel++;
+  if (state.score > state.highScore) {
+    state.highScore = state.score;
+    localStorage.setItem('kalkunaator_hs', state.highScore);
+  }
+  updateStats();
+  checkLevelUp();
+
+  setTimeout(() => { newRound(); }, 900);
+}
+
+function checkLevelUp() {
+  if (state.correctInLevel >= 8 && state.level < 3) {
+    const toast = document.getElementById('upgrade-toast');
+    toast.textContent = `⭐ Vahva! Mine tasemele ${state.level + 1}?`;
+    toast.classList.add('show');
+    toast.onclick = () => {
+      setLevel(state.level + 1);
+      toast.classList.remove('show');
+    };
+    setTimeout(() => toast.classList.remove('show'), 7000);
+  }
+}
+
+function updateStats() {
+  document.getElementById('score-display').textContent = state.score;
+  const sdEl = document.getElementById('streak-display');
+  sdEl.textContent = state.streak;
+  sdEl.className = 'stat-value' + (state.streak >= 5 ? ' streak-fire' : '');
+  document.getElementById('hs-display').textContent = state.highScore;
+  document.getElementById('hs-val').textContent = state.highScore;
+}
+
+function setLevel(lvl) {
+  state.level = lvl;
+  state.correctInLevel = 0;
+  const names = { 1: 'Algaja', 2: 'Harjutaja', 3: 'Matemaatik' };
+  document.getElementById('level-badge').textContent = `Tase ${lvl} — ${names[lvl]}`;
+  document.querySelectorAll('.lvl-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.level) === lvl);
+  });
+  if (lvl > state.highLevel) {
+    state.highLevel = lvl;
+    localStorage.setItem('kalkunaator_hl', lvl);
+  }
+  newRound();
+}
+
+// =====================================================
+// MAIN LOOP
+// =====================================================
+let lastTs = 0;
+function loop(ts) {
+  const dt = ts - lastTs;
+  lastTs = ts;
+
+  drawStars(ts / 1000);
+  updateRocket(ts);
+
+  // Move asteroids
+  for (const ast of state.asteroids) {
+    if (state.rocketActive && ast.id === state.targetAsteroidId) continue;
+    ast.x += ast.vx;
+    ast.y += ast.vy;
+    // Bounce
+    if (ast.x < 0) { ast.x = 0; ast.vx *= -1; }
+    if (ast.y < 0) { ast.y = 0; ast.vy *= -1; }
+    if (ast.x + ast.size > panelW) { ast.x = panelW - ast.size; ast.vx *= -1; }
+    if (ast.y + ast.size > panelH) { ast.y = panelH - ast.size; ast.vy *= -1; }
+    const el = asteroidEls[ast.id];
+    if (el) {
+      el.style.left = ast.x + 'px';
+      el.style.top = ast.y + 'px';
+    }
+  }
+
+  state.animFrame = requestAnimationFrame(loop);
+}
+
+// =====================================================
+// INIT
+// =====================================================
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  if (!state.rocketActive) newRound();
+});
+
+document.getElementById('answer-input').addEventListener('input', updateFireBtn);
+document.getElementById('answer-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryFire();
+});
+document.getElementById('fire-btn').addEventListener('click', tryFire);
+
+document.querySelectorAll('.lvl-btn').forEach(btn => {
+  btn.addEventListener('click', () => setLevel(parseInt(btn.dataset.level)));
+});
+
+// Init
+updateStats();
+resizeCanvas();
+setLevel(1);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
