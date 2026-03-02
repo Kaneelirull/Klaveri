@@ -479,7 +479,9 @@ function addBalloon(color, x) {
   liveBalloons.set(id, { el, colorId: color.id });
 
   el.addEventListener('click', () => {
-    const currentColor = COLORS.find(c => c.id === el.dataset.colorId);
+    const entry = liveBalloons.get(id);
+    if (!entry) return;
+    const currentColor = COLORS.find(c => c.id === entry.colorId);
     onBalloonClick(id, currentColor, el);
   });
   el.addEventListener('mouseenter', () => {
@@ -517,14 +519,15 @@ function addBalloon(color, x) {
 
 // Swap a live balloon's color in-place
 function morphBalloon(id, el, newColor) {
+  // Update the map IMMEDIATELY so any click reads the new color right away
+  liveBalloons.set(id, { el, colorId: newColor.id });
+  el.dataset.colorId = newColor.id;
   const SIZE = parseInt(el.querySelector('svg').getAttribute('width'));
   el.style.filter = 'brightness(2) blur(3px)';
   setTimeout(() => {
     if (!document.contains(el)) return;
     el.innerHTML = makeBalloonSVG(newColor.hex, SIZE);
-    el.dataset.colorId = newColor.id;
     el.style.filter = '';
-    liveBalloons.set(id, { el, colorId: newColor.id });
   }, 180);
 }
 
