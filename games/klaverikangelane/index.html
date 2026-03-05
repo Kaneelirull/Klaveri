@@ -418,6 +418,10 @@
       <div class="level-badge" id="type-badge">Tase 1</div>
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
         <div class="wpm-live" id="wpm-display">⌚ 0 wpm</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:rgba(255,255,255,0.6);cursor:pointer;user-select:none;">
+          <input type="checkbox" id="caps-toggle" checked onchange="toggleCaps(this.checked)" style="width:15px;height:15px;accent-color:var(--accent2);cursor:pointer;">
+          Suurtähed
+        </label>
         <div style="font-family:'Fredoka One'; color:var(--accent2);">Vead: <span id="err-count">0</span> ❌</div>
       </div>
 
@@ -531,6 +535,7 @@ const LEVEL_CONFIG = {
 const STORY = `Hiireke elas väikeses majas suure tamme all. Ühel päeval sai ta endale uue arvuti. See oli väike ja hall, just paras hiirekäppadele. Hiireke pani arvuti lauale ja vajutas nuppu. Ekraan läks siniseks ja ilmus rõõmus tervitus.\nHiireke õppis joonistama värvilisi pilte. Ta tegi pildi juustust, päikesest ja oma sõbrast Oravast. Siis kirjutas ta lühikese kirja: Tere, sõber.\nOrav tuli külla ja nad vaatasid koos pilte. Nad naersid ja plaksutasid. Hiireke lubas, et kasutab arvutit targalt. Pärast mängu läksid nad õue päriselt jooksma. Arvuti ootas rahulikult laual.`;
 
 // ====== STATE ======
+let allCapsMode = true;
 let currentLevel = 1;
 let unlockedLevel = 3;
 let totalScore = 0;
@@ -700,6 +705,9 @@ function startTyping(){
   document.getElementById('err-count').textContent='0';
   document.getElementById('wpm-display').textContent='⌚ 0 wpm';
 
+  const capsToggle = document.getElementById('caps-toggle');
+  if(capsToggle) capsToggle.checked = allCapsMode;
+
   showScreen('screen-type');
 
   if(keyHandler) document.removeEventListener('keydown', keyHandler);
@@ -742,13 +750,19 @@ function getCurrentSentence() {
   return { sentStart, sentEnd };
 }
 
+function toggleCaps(on){
+  allCapsMode = on;
+  renderChallenge();
+}
+
 function renderChallenge(){
   const el = document.getElementById('challenge-word');
   const { sentStart, sentEnd } = getCurrentSentence();
   let html='';
   for(let i=sentStart;i<sentEnd;i++){
     const ch = challengeText[i]==='\n'?' ':challengeText[i];
-    const display = ch===' '?'&nbsp;':ch;
+    const displayChar = allCapsMode ? ch.toUpperCase() : ch;
+    const display = displayChar===' '?'&nbsp;':displayChar;
     if(i<currentIndex){
       html+=`<span class="char-correct">${display}</span>`;
     } else if(i===currentIndex){
