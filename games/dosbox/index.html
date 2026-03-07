@@ -692,8 +692,8 @@ async function launchGame(game) {
       document.getElementById('loading-overlay').classList.add('hidden');
     }, 3000);
   } catch (err) {
-    document.getElementById('loading-sub').textContent = 'Viga: ' + err.message;
-    showError('Mängu käivitamine ebaõnnestus: ' + err.message);
+    document.getElementById('loading-sub').textContent = 'Mängu käivitamine ebaõnnestus.';
+    showError('Mängu käivitamine ebaõnnestus.');
     console.error(err);
   }
 }

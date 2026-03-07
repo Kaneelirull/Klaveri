@@ -5,6 +5,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mälu 🃏</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,12 +43,11 @@ body {
   position: fixed;
   inset: 0;
   z-index: 10;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  display: none;
 }
 .screen.active { display: flex; }
 
@@ -931,7 +931,8 @@ function onGameEnd() {
     if (qualifies) {
       msg.innerHTML = '<div class="end-rank-notice">🌟 Uus rekord! Sisesta oma nimi.</div>';
       state.pendingEntry = { score, diff: state.diff, cat: state.cat,
-        date: new Date().toLocaleDateString('et-EE', {day:'2-digit',month:'2-digit'}) };
+        date: new Date().toLocaleDateString('et-EE', {day:'2-digit',month:'2-digit'}),
+        ts: Date.now() };
       document.getElementById('name-score-display').innerHTML =
         `Sinu tulemus: <strong>${score} punkti</strong> · ${DIFF_CONFIG[state.diff].label}`;
       showScreen('screen-name');
@@ -945,7 +946,7 @@ function onGameEnd() {
 async function submitName(name) {
   const entry = { ...state.pendingEntry, name: name || 'Anonüüm' };
   const all   = await addScore(entry.diff, entry);
-  const rank  = (all[entry.diff]||[]).findIndex(e => e.score===entry.score && e.name===entry.name);
+  const rank  = (all[entry.diff]||[]).findIndex(e => e.ts===entry.ts);
   state.highlightRow = rank;
   const msg = document.getElementById('end-rank-msg');
   if (rank >= 0) msg.innerHTML = `<div class="end-rank-notice">🎖️ Koht #${rank+1} edetabelis!</div>`;
@@ -967,8 +968,8 @@ async function showLeaderboard(fromDiff) {
       const tr = document.createElement('tr');
       if (state.highlightRow===i) tr.classList.add('highlight');
       tr.innerHTML = `<td><span class="lb-rank ${rc[i]||''}">${i+1}</span></td>
-        <td>${e.name||'Anonüüm'}</td><td><strong>${e.score}</strong></td>
-        <td>${CAT_LABELS[e.cat]||e.cat}</td><td>${e.date||''}</td>`;
+        <td>${esc(e.name||'Anonüüm')}</td><td><strong>${parseInt(e.score,10)||0}</strong></td>
+        <td>${esc(CAT_LABELS[e.cat]||e.cat)}</td><td>${esc(e.date||'')}</td>`;
       body.appendChild(tr);
     });
   }
@@ -1011,12 +1012,20 @@ function shuffle(arr) {
   return arr;
 }
 
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
 function setupSel(id, key) {
   document.getElementById(id).querySelectorAll('.sel-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
       document.getElementById(id).querySelectorAll('.sel-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      state[key] = btn.dataset[key==='diff'?'diff':key==='mode'?'mode':'cat'];
+      state[key] = btn.dataset[key];
     });
   });
 }
