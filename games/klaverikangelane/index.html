@@ -580,9 +580,15 @@ let unlockedLevel = 3;
 let totalScore = 0;
 let levelScores = {};
 
+// Score DB loaded from API
+let levelScoresDB = {};
+let storyScoresDB = {};
+
 let challengeText = '';
 let currentIndex = 0;
 let errors = 0;
+let currentCombo = 0;
+let maxCombo = 0;
 let startTime = null;
 let timerInterval = null;
 let timeLimit = 90;
@@ -750,6 +756,7 @@ function startTyping(){
   const cfg = LEVEL_CONFIG[currentLevel];
   challengeText = currentLevel===3 ? STORIES[selectedStory].text : genChallenge(cfg.keys, cfg.genLength);
   currentIndex=0; errors=0; startTime=null; elapsedSeconds=0;
+  currentCombo=0; maxCombo=0;
   timeLimit = cfg.timeLimit;
 
   const badge = document.getElementById('type-badge');
@@ -886,6 +893,7 @@ function handleKey(e){
     e.preventDefault();
     flashKey('kbd-type', effectiveExpected, 'correct-flash');
     currentIndex++;
+    currentCombo++; if(currentCombo>maxCombo) maxCombo=currentCombo;
     // After typing a sentence-ending punctuation, auto-skip the following space
     const justTyped = expected;
     if((justTyped==='.' || justTyped==='!' || justTyped==='?') && challengeText[currentIndex]===' '){
@@ -899,6 +907,7 @@ function handleKey(e){
   } else if(pressed.length===1 || pressed==='Backspace'){
     e.preventDefault();
     errors++;
+    currentCombo=0;
     document.getElementById('err-count').textContent=errors;
     flashKey('kbd-type', effectiveExpected, 'wrong-flash');
     showFeedback('❌',false);
@@ -943,7 +952,7 @@ function calcScore(){
   return base + timeBonus*2;
 }
 
-function finishLevel(timedOut=false){
+async function finishLevel(timedOut=false){
   stopTimer();
   const score = calcScore();
   levelScores[currentLevel]=score;
@@ -956,13 +965,14 @@ function finishLevel(timedOut=false){
 
   document.getElementById('complete-emoji').textContent = timedOut?'⏰':score>400?'🏆':score>200?'🎉':'😊';
   document.getElementById('complete-title').textContent = timedOut?'Aeg sai läbi!':score>400?'Fantastiline!':'Tubli töö!';
-  document.getElementById('complete-msg').textContent = timedOut?'Proovi uuesti, aga ära karda!':'Sa trükkisid lõpuni!';
+  document.getElementById('complete-msg').textContent = timedOut?'Proovi uuesti, aga ära karda!':'Salvestab tulemust...';
 
   document.getElementById('stat-grid').innerHTML=`
     <div class="stat-item"><div class="stat-value">${score}</div><div class="stat-label">Punktid</div></div>
     <div class="stat-item"><div class="stat-value">${accuracy}%</div><div class="stat-label">Täpsus</div></div>
     <div class="stat-item"><div class="stat-value">${elapsedSeconds}s</div><div class="stat-label">Aeg</div></div>
     <div class="stat-item"><div class="stat-value">${errors}</div><div class="stat-label">Vead</div></div>
+    <div class="stat-item"><div class="stat-value">${maxCombo}</div><div class="stat-label">Max kombo</div></div>
   `;
 
   const nb=document.getElementById('next-level-btn');
@@ -976,6 +986,25 @@ function finishLevel(timedOut=false){
 
   if(!timedOut) spawnConfetti();
   showScreen('screen-complete');
+
+  if(!timedOut){
+    const entry = { time: elapsedSeconds, mistakes: errors, combo: maxCombo };
+    let rank;
+    if(currentLevel===3){
+      rank = await updateScores(`story_${selectedStory}`, true, entry);
+    } else {
+      rank = await updateScores(`level_${currentLevel}`, false, entry);
+    }
+    const msgEl = document.getElementById('complete-msg');
+    if(rank===1){
+      msgEl.textContent='PALJU ÕNNE, UUS REKORD!';
+      msgEl.style.cssText='color:var(--accent2);font-weight:800;font-size:1.2rem;';
+    } else if(rank!==null){
+      msgEl.textContent=`Hea töö! Said ${rank}. koha`;
+    } else {
+      msgEl.textContent='Tase valmis.';
+    }
+  }
 }
 
 function nextLevel(){
@@ -991,6 +1020,7 @@ function showFinalDone(){
 
 function restartAll(){
   totalScore=0; unlockedLevel=1; currentLevel=1; levelScores={};
+  currentCombo=0; maxCombo=0;
   document.getElementById('total-score').textContent='0';
   showLevels();
 }
@@ -1017,10 +1047,62 @@ function spawnConfetti(){
   }
 }
 
+// ====== SCORES ======
+function compareScores(a, b){
+  if(a.time !== b.time) return a.time - b.time;
+  if(a.mistakes !== b.mistakes) return a.mistakes - b.mistakes;
+  return b.combo - a.combo;
+}
+
+function getRank(list, entry){
+  const sorted = [...list, entry].sort(compareScores);
+  const idx = sorted.indexOf(entry);
+  return idx < 10 ? idx + 1 : null;
+}
+
+async function loadScores(){
+  try {
+    const [lvl, story] = await Promise.all([
+      fetch('/api/scores/level_scores.json').then(r => r.ok ? r.json() : {}),
+      fetch('/api/scores/story_scores.json').then(r => r.ok ? r.json() : {})
+    ]);
+    levelScoresDB = (lvl && typeof lvl === 'object') ? lvl : {};
+    storyScoresDB = (story && typeof story === 'object') ? story : {};
+  } catch(e) {
+    levelScoresDB = {};
+    storyScoresDB = {};
+  }
+}
+
+async function saveScores(filename, data){
+  try {
+    await fetch(`/api/scores/${filename}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+  } catch(e) {
+    console.warn('Could not save scores:', e);
+  }
+}
+
+async function updateScores(key, isStory, entry){
+  const db = isStory ? storyScoresDB : levelScoresDB;
+  const filename = isStory ? 'story_scores.json' : 'level_scores.json';
+  const list = Array.isArray(db[key]) ? db[key] : [];
+  const rank = getRank(list, entry);
+  if(rank !== null){
+    db[key] = [...list, entry].sort(compareScores).slice(0, 10);
+    await saveScores(filename, db);
+  }
+  return rank;
+}
+
 // ====== BOOT ======
 initStars();
 showScreen('screen-home');
 document.getElementById('start-btn').onclick=startTyping;
+loadScores();
 </script>
 </body>
 </html>
