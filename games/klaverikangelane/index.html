@@ -313,6 +313,18 @@
   .nh-left { color:var(--accent1); }
   .nh-right { color:var(--accent4); }
 
+  /* Story selection cards */
+  .story-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:14px 0; }
+  .story-card {
+    background:rgba(107,203,119,0.08); border:2px solid rgba(107,203,119,0.25); border-radius:16px;
+    padding:16px; cursor:pointer; transition:all 0.2s; text-align:center;
+  }
+  .story-card:hover { background:rgba(107,203,119,0.15); border-color:var(--accent3); transform:translateY(-2px); }
+  .story-card.selected { background:rgba(107,203,119,0.25); border-color:var(--accent3); box-shadow:0 0 20px rgba(107,203,119,0.4); }
+  .story-card .sc-emoji { font-size:2rem; margin-bottom:8px; }
+  .story-card .sc-title { font-family:'Fredoka One'; font-size:1.1rem; color:var(--accent3); }
+  .story-card .sc-preview { font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:6px; line-height:1.4; }
+
   /* responsive */
   @media(max-width:600px) {
     .logo { font-size:2rem; }
@@ -395,12 +407,17 @@
 
       <div class="keyboard-demo" id="kbd-intro"></div>
 
+      <div id="story-select" style="display:none;">
+        <p style="margin-bottom:8px;color:rgba(255,255,255,0.7);">Vali lugu, mida kirjutada:</p>
+        <div class="story-cards" id="story-cards"></div>
+      </div>
+
       <div class="hint-box" id="intro-hint">
         Punane = <strong>vasak käsi</strong> &nbsp;|&nbsp; Sinine = <strong>parem käsi</strong><br>
         Tähtel <strong>F</strong> ja <strong>J</strong> on väikesed muhkud – need on algkohad!
       </div>
 
-      <div class="finger-guide">
+      <div class="finger-guide" id="intro-finger-guide">
         <div class="finger-item"><div class="finger-dot fd-left"></div> Vasak käsi</div>
         <div class="finger-item"><div class="finger-dot fd-right"></div> Parem käsi</div>
       </div>
@@ -428,6 +445,11 @@
       <div class="timer-bar-wrap">
         <div class="timer-label" id="timer-label">⏱ 0s</div>
         <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+      </div>
+
+      <div class="timer-bar-wrap" id="story-progress-wrap" style="display:none;">
+        <div class="timer-label" id="story-progress-label">📖 0%</div>
+        <div class="timer-bar"><div class="timer-fill" id="story-progress-fill" style="width:0%;background:linear-gradient(90deg,var(--accent3),var(--accent4));"></div></div>
       </div>
 
       <div class="typing-area">
@@ -532,10 +554,27 @@ const LEVEL_CONFIG = {
   }
 };
 
-const STORY = `Hiireke elas väikeses majas suure tamme all. Ühel päeval sai ta endale uue arvuti. See oli väike ja hall, just paras hiirekäppadele. Hiireke pani arvuti lauale ja vajutas nuppu. Ekraan läks siniseks ja ilmus rõõmus tervitus.\nHiireke õppis joonistama värvilisi pilte. Ta tegi pildi juustust, päikesest ja oma sõbrast Oravast. Siis kirjutas ta lühikese kirja: Tere, sõber.\nOrav tuli külla ja nad vaatasid koos pilte. Nad naersid ja plaksutasid. Hiireke lubas, et kasutab arvutit targalt. Pärast mängu läksid nad õue päriselt jooksma. Arvuti ootas rahulikult laual.`;
+const STORIES = [
+  {
+    title: 'Hiireke ja arvuti',
+    emoji: '💻',
+    text: `Hiireke elas väikeses majas suure tamme all. Ühel päeval sai ta endale uue arvuti. See oli väike ja hall, just paras hiirekäppadele. Hiireke pani arvuti lauale ja vajutas nuppu. Ekraan läks siniseks ja ilmus rõõmus tervitus.\nHiireke õppis joonistama värvilisi pilte. Ta tegi pildi juustust, päikesest ja oma sõbrast Oravast. Siis kirjutas ta lühikese kirja: Tere, sõber.\nOrav tuli külla ja nad vaatasid koos pilte. Nad naersid ja plaksutasid. Hiireke lubas, et kasutab arvutit targalt. Pärast mängu läksid nad õue päriselt jooksma. Arvuti ootas rahulikult laual.`
+  },
+  {
+    title: 'Väike vend',
+    emoji: '🐭',
+    text: `Hiireke elas väikese tamme all soojas urus. Ühel päeval ütles ema hiir: Meie perre tuleb uus väike vend. Hiireke oli väga põnevil.\nVaristi sündiski väike hiirepoeg. Ta oli pisike, pehme ja piiksus vaikselt. Hiireke vaatas teda ja ütles: Tere, väike vend.\nAlguses magas väike vend palju. Kui ta ärkas, liigutas ta väikseid käppi ja piiksus. Hiireke tõi talle pehme rohututi ja näitas talle oma mänguasju.\nIga päev kasvas väike vend natuke suuremaks. Ühel päeval tegid nad koos esimesed väikesed sammud urust välja. Hiireke hoidis vennal käest kinni ja ütles: Tule, ma näitan sulle maailma.`
+  },
+  {
+    title: 'Juustu lugu',
+    emoji: '🧀',
+    text: `Hiireke leidis ühel hommikul metsa alt väikese juustutüki. Ta oli väga rõõmus ja tahtis selle kohe ära süüa. Kuid siis märkas ta, et lähedal istus väike jänes, kes nägi väga näljane välja.\nHiireke mõtles natuke. Kui ta sööb kõik üksi, saab kõht täis, aga sõber jääb kurvaks. Ta murdis juustust pooleks ja andis teise poole jänesele.\nJänes naeratas ja ütles aitäh. Nad sõid koos ja jutustasid.\nÕhtul tundis hiireke end väga hästi. Ta mõistis, et jagamine teeb südame soojaks ja sõbrad rõõmsaks. Sellest päevast alates jagas hiireke alati, kui tal oli midagi head.`
+  }
+];
 
 // ====== STATE ======
 let allCapsMode = true;
+let selectedStory = 0;
 let currentLevel = 1;
 let unlockedLevel = 3;
 let totalScore = 0;
@@ -664,14 +703,38 @@ function startLevel(n){
   buildKeyboard('kbd-intro', highlightKeys);
 
   if(n===3){
+    document.getElementById('kbd-intro').style.display='none';
+    document.getElementById('intro-finger-guide').style.display='none';
+    const storySelect = document.getElementById('story-select');
+    storySelect.style.display='';
+    const container = document.getElementById('story-cards');
+    container.innerHTML='';
+    STORIES.forEach((s,i)=>{
+      const preview = s.text.replace(/\n/g,' ').substring(0,70)+'…';
+      const card = document.createElement('div');
+      card.className='story-card'+(i===selectedStory?' selected':'');
+      card.innerHTML=`<div class="sc-emoji">${s.emoji}</div><div class="sc-title">${s.title}</div><div class="sc-preview">${preview}</div>`;
+      card.onclick=()=>selectStory(i);
+      container.appendChild(card);
+    });
     document.getElementById('intro-hint').innerHTML =
-      '📖 Kirjuta Hiireke lugu täpselt, nagu ekraanil näed. Iga kirjavahemärk loeb!';
+      '📖 Kirjuta lugu täpselt, nagu ekraanil näed. Iga kirjavahemärk loeb!';
   } else {
+    document.getElementById('kbd-intro').style.display='';
+    document.getElementById('intro-finger-guide').style.display='';
+    document.getElementById('story-select').style.display='none';
     document.getElementById('intro-hint').innerHTML =
       `Punane = <strong>vasak käsi</strong> &nbsp;|&nbsp; Sinine = <strong>parem käsi</strong><br>Pane <strong>${cfg.keys.map(k=>k.toUpperCase()).join(', ')}</strong> sõrmed valmis!`;
   }
 
   showScreen('screen-intro');
+}
+
+function selectStory(i){
+  selectedStory=i;
+  document.querySelectorAll('.story-card').forEach((c,j)=>{
+    c.classList.toggle('selected',j===i);
+  });
 }
 
 function genChallenge(keys, length){
@@ -685,7 +748,7 @@ function genChallenge(keys, length){
 
 function startTyping(){
   const cfg = LEVEL_CONFIG[currentLevel];
-  challengeText = currentLevel===3 ? STORY : genChallenge(cfg.keys, cfg.genLength);
+  challengeText = currentLevel===3 ? STORIES[selectedStory].text : genChallenge(cfg.keys, cfg.genLength);
   currentIndex=0; errors=0; startTime=null; elapsedSeconds=0;
   timeLimit = cfg.timeLimit;
 
@@ -704,6 +767,15 @@ function startTyping(){
   document.getElementById('timer-label').textContent='⏱ 0s';
   document.getElementById('err-count').textContent='0';
   document.getElementById('wpm-display').textContent='⌚ 0 wpm';
+
+  const storyWrap = document.getElementById('story-progress-wrap');
+  if(currentLevel===3){
+    storyWrap.style.display='';
+    document.getElementById('story-progress-fill').style.width='0%';
+    document.getElementById('story-progress-label').textContent='📖 0%';
+  } else {
+    storyWrap.style.display='none';
+  }
 
   const capsToggle = document.getElementById('caps-toggle');
   if(capsToggle) capsToggle.checked = allCapsMode;
@@ -755,9 +827,19 @@ function toggleCaps(on){
   renderChallenge();
 }
 
+function updateStoryProgress(){
+  if(currentLevel!==3) return;
+  const total = challengeText.length;
+  const pct = Math.round((currentIndex/total)*100);
+  const charsLeft = total - currentIndex;
+  document.getElementById('story-progress-fill').style.width=pct+'%';
+  document.getElementById('story-progress-label').textContent=`📖 ${pct}% – ${charsLeft} tähemärki jäänud`;
+}
+
 function renderChallenge(){
   const el = document.getElementById('challenge-word');
   const { sentStart, sentEnd } = getCurrentSentence();
+  updateStoryProgress();
   let html='';
   for(let i=sentStart;i<sentEnd;i++){
     const ch = challengeText[i]==='\n'?' ':challengeText[i];
