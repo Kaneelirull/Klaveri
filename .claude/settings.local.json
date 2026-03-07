@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker:*)",
+      "Bash(claude mcp:*)",
+      "mcp__jcodemunch__index_folder"
+    ]
+  }
+}

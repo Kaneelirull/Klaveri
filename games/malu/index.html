@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mälu 🃏</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0d1a;
+  --surface: #161625;
+  --border: rgba(255,255,255,0.08);
+  --accent: #ffcc44;
+  --accent2: #ff6b8a;
+  --accent3: #44ddaa;
+  --text: #f0f0f8;
+  --muted: rgba(240,240,248,0.5);
+  --card-back: linear-gradient(135deg, #1e1e35 0%, #2a2a45 100%);
+  --card-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  --flip-duration: 0.45s;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  display: none;
+}
+.screen.active { display: flex; }
+
+.back-btn {
+  position: fixed;
+  top: 14px; left: 14px;
+  z-index: 999;
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  transition: color 0.2s, border-color 0.2s;
+}
+.back-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+#screen-menu { gap: 32px; }
+
+.menu-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.8rem, 8vw, 4.5rem);
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(255,204,68,0.5);
+  text-align: center;
+  line-height: 1.1;
+}
+.menu-title .sub {
+  display: block;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.4em;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  margin-top: 6px;
+}
+
+.menu-options {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.option-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-left: 4px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sel-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.sel-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+.sel-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,204,68,0.08);
+  box-shadow: 0 0 16px rgba(255,204,68,0.15);
+}
+
+.start-game-btn {
+  width: 100%;
+  padding: 18px;
+  background: var(--accent);
+  border: none;
+  border-radius: 14px;
+  color: #0d0d1a;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.4rem;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+  box-shadow: 0 4px 24px rgba(255,204,68,0.3);
+}
+.start-game-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(255,204,68,0.4);
+  background: #ffd966;
+}
+.start-game-btn:active { transform: translateY(0); }
+
+.lb-btn {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 20px;
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lb-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+#screen-game {
+  justify-content: flex-start;
+  padding: 60px 20px 20px;
+  gap: 16px;
+}
+
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 680px;
+  padding: 12px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  gap: 12px;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.hud-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hud-value {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.4rem;
+  color: var(--text);
+  line-height: 1;
+}
+.hud-value.accent { color: var(--accent); }
+.hud-value.green  { color: var(--accent3); }
+
+.hud-divider {
+  width: 1px;
+  height: 30px;
+  background: var(--border);
+}
+
+.card-grid {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 680px;
+}
+.card-grid.grid-4x3 { grid-template-columns: repeat(4, 1fr); }
+.card-grid.grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+.card-grid.grid-5x4 { grid-template-columns: repeat(5, 1fr); }
+
+.mem-card {
+  aspect-ratio: 3/4;
+  cursor: pointer;
+  perspective: 600px;
+  user-select: none;
+}
+
+.mem-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--flip-duration) cubic-bezier(0.4,0,0.2,1);
+  border-radius: 12px;
+}
+
+.mem-card.flipped .mem-card-inner,
+.mem-card.matched .mem-card-inner {
+  transform: rotateY(180deg);
+}
+
+.mem-card-front,
+.mem-card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 6px;
+}
+
+.mem-card-front {
+  background: var(--card-back);
+  border: 2px solid rgba(255,255,255,0.06);
+  box-shadow: var(--card-shadow);
+}
+.card-back-pattern {
+  font-size: 1.8rem;
+  opacity: 0.25;
+}
+.card-back-dots {
+  display: grid;
+  grid-template-columns: repeat(3,6px);
+  gap: 4px;
+  opacity: 0.12;
+}
+.card-back-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: white;
+}
+
+.mem-card-back {
+  transform: rotateY(180deg);
+  background: #1e1e35;
+  border: 2px solid rgba(255,255,255,0.1);
+  box-shadow: var(--card-shadow);
+}
+
+.mem-card.matched .mem-card-back {
+  border-color: var(--accent3);
+  background: #0f2e26;
+  box-shadow: 0 0 20px rgba(68,221,170,0.25);
+}
+
+.card-emoji {
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  line-height: 1;
+}
+.card-word {
+  font-size: clamp(0.55rem, 1.8vw, 0.85rem);
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+@keyframes wrongShake {
+  0%,100% { transform: rotateY(180deg) translateX(0); }
+  25% { transform: rotateY(180deg) translateX(-5px); }
+  75% { transform: rotateY(180deg) translateX(5px); }
+}
+.mem-card.wrong .mem-card-inner {
+  animation: wrongShake 0.35s ease;
+}
+
+#screen-name { gap: 24px; }
+.name-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2rem, 6vw, 3rem);
+  color: var(--accent);
+  text-align: center;
+}
+.name-score-display {
+  font-size: 1.1rem;
+  color: var(--muted);
+  text-align: center;
+}
+.name-score-display strong { color: var(--text); }
+
+.name-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 340px;
+  align-items: center;
+}
+.name-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.name-input:focus { border-color: var(--accent); }
+.name-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: #0d0d1a;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+}
+.name-submit-btn:hover { background: #ffd966; transform: translateY(-1px); }
+
+.skip-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.skip-btn:hover { color: var(--text); }
+
+#screen-leaderboard { gap: 20px; }
+.lb-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2rem, 6vw, 3rem);
+  color: var(--accent);
+  text-align: center;
+}
+
+.lb-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 4px;
+}
+.lb-tab {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lb-tab.active { background: var(--accent); color: #0d0d1a; }
+
+.lb-table-wrap {
+  width: 100%;
+  max-width: 500px;
+  overflow-x: auto;
+}
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.lb-table th {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 8px 12px;
+  text-align: left;
+}
+.lb-table td {
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  color: var(--text);
+}
+.lb-table tr.highlight td {
+  color: var(--accent);
+  background: rgba(255,204,68,0.06);
+}
+.lb-rank {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1rem;
+  color: var(--muted);
+}
+.lb-rank.gold   { color: #ffd700; }
+.lb-rank.silver { color: #c0c0c0; }
+.lb-rank.bronze { color: #cd7f32; }
+
+.lb-back-btn {
+  padding: 12px 28px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lb-back-btn:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+
+#screen-end { gap: 20px; }
+.end-emoji { font-size: 4rem; animation: endBounce 0.7s ease infinite alternate; }
+@keyframes endBounce {
+  from { transform: scale(1) translateY(0); }
+  to   { transform: scale(1.1) translateY(-8px); }
+}
+.end-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  color: var(--accent);
+  text-align: center;
+}
+.end-stats {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.end-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 24px;
+  min-width: 110px;
+}
+.end-stat-val {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: var(--accent);
+  line-height: 1;
+}
+.end-stat-lbl {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.stars-row {
+  display: flex;
+  gap: 6px;
+  font-size: 2rem;
+}
+.end-btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.end-btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s, background 0.2s;
+}
+.end-btn:hover { transform: translateY(-2px); }
+.end-btn.primary { background: var(--accent); color: #0d0d1a; }
+.end-btn.secondary { background: var(--surface); border: 1.5px solid var(--border); color: var(--text); }
+.end-rank-notice {
+  font-size: 0.9rem;
+  color: var(--accent3);
+  font-weight: 700;
+  text-align: center;
+}
+.end-no-rank-notice {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.confetti-piece {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 3px;
+  animation: cffall linear forwards;
+}
+@keyframes cffall {
+  0%   { opacity:1; transform: translateY(0) rotate(0deg); }
+  100% { opacity:0; transform: translateY(105vh) rotate(720deg); }
+}
+
+@media (max-width: 480px) {
+  .card-grid.grid-5x4 { grid-template-columns: repeat(4, 1fr); }
+  .hud { padding: 10px 12px; gap: 8px; }
+  .hud-value { font-size: 1.1rem; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<a class="back-btn" href="../../index.html">← Tagasi</a>
+
+<!-- MENU -->
+<div class="screen active" id="screen-menu">
+  <div class="menu-title">
+    Mälu
+    <span class="sub">Leia paarid · Lær ord · Find par</span>
+  </div>
+
+  <div class="menu-options">
+    <div class="option-group">
+      <div class="option-label">Mängurežiim</div>
+      <div class="btn-row" id="btns-mode">
+        <button class="sel-btn active" data-mode="et-pic">🇪🇪 + Pilt</button>
+        <button class="sel-btn" data-mode="sv-pic">🇸🇪 + Pilt</button>
+        <button class="sel-btn" data-mode="et-sv">🇪🇪 + 🇸🇪</button>
+      </div>
+    </div>
+
+    <div class="option-group">
+      <div class="option-label">Kategooria</div>
+      <div class="btn-row" id="btns-cat">
+        <button class="sel-btn active" data-cat="animals">🐾 Loomad</button>
+        <button class="sel-btn" data-cat="food">🍎 Toit</button>
+        <button class="sel-btn" data-cat="colors">🌈 Värvid</button>
+        <button class="sel-btn" data-cat="home">🏠 Kodu</button>
+      </div>
+    </div>
+
+    <div class="option-group">
+      <div class="option-label">Raskusaste</div>
+      <div class="btn-row" id="btns-diff">
+        <button class="sel-btn active" data-diff="easy">😊 Lihtne</button>
+        <button class="sel-btn" data-diff="medium">😐 Keskmine</button>
+        <button class="sel-btn" data-diff="hard">😤 Raske</button>
+      </div>
+    </div>
+
+    <button class="start-game-btn" id="btn-start">▶ Alusta mängu</button>
+
+    <button class="lb-btn" id="btn-lb" style="align-self:center;">
+      🏆 Rekordid
+    </button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="screen-game">
+  <div class="hud">
+    <div class="hud-item">
+      <span class="hud-label">Pöörded</span>
+      <span class="hud-value accent" id="hud-flips">0</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-item">
+      <span class="hud-label">Paarid</span>
+      <span class="hud-value green" id="hud-pairs">0/0</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-item">
+      <span class="hud-label">Aeg</span>
+      <span class="hud-value" id="hud-time">0:00</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-item">
+      <span class="hud-label">Punktid</span>
+      <span class="hud-value accent" id="hud-score">0</span>
+    </div>
+  </div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<!-- NAME ENTRY -->
+<div class="screen" id="screen-name">
+  <div class="name-title">🎉 Sisesta oma nimi!</div>
+  <div class="name-score-display" id="name-score-display"></div>
+  <div class="name-input-wrap">
+    <input class="name-input" id="name-input" type="text" maxlength="12"
+      placeholder="Sinu nimi..." autocomplete="off" autocorrect="off" spellcheck="false" />
+    <button class="name-submit-btn" id="name-submit">✓ Salvesta</button>
+    <button class="skip-btn" id="name-skip">Jäta vahele</button>
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="screen" id="screen-leaderboard">
+  <div class="lb-title">🏆 Rekordid</div>
+  <div class="lb-tabs" id="lb-tabs">
+    <button class="lb-tab active" data-diff="easy">😊 Lihtne</button>
+    <button class="lb-tab" data-diff="medium">😐 Keskmine</button>
+    <button class="lb-tab" data-diff="hard">😤 Raske</button>
+  </div>
+  <div class="lb-table-wrap">
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nimi</th>
+          <th>Punktid</th>
+          <th>Kategooria</th>
+          <th>Kuupäev</th>
+        </tr>
+      </thead>
+      <tbody id="lb-body"></tbody>
+    </table>
+  </div>
+  <button class="lb-back-btn" id="lb-back">← Tagasi menüüsse</button>
+</div>
+
+<!-- END SCREEN -->
+<div class="screen" id="screen-end">
+  <div class="end-emoji" id="end-emoji">🏆</div>
+  <div class="end-title" id="end-title">Suurepärane!</div>
+  <div class="stars-row" id="end-stars"></div>
+  <div class="end-stats" id="end-stats"></div>
+  <div id="end-rank-msg"></div>
+  <div class="end-btns">
+    <button class="end-btn primary" id="end-again">🔄 Uus mäng</button>
+    <button class="end-btn secondary" id="end-menu">🏠 Menüü</button>
+    <button class="end-btn secondary" id="end-lb">🏆 Rekordid</button>
+  </div>
+</div>
+
+<script>
+const WORDS = {
+  animals: [
+    { emoji:'🐱', et:'kass',    sv:'katt' },
+    { emoji:'🐶', et:'koer',    sv:'hund' },
+    { emoji:'🐰', et:'jänes',   sv:'kanin' },
+    { emoji:'🐸', et:'konn',    sv:'groda' },
+    { emoji:'🐻', et:'karu',    sv:'björn' },
+    { emoji:'🦊', et:'rebane',  sv:'räv' },
+    { emoji:'🐷', et:'siga',    sv:'gris' },
+    { emoji:'🐮', et:'lehm',    sv:'ko' },
+    { emoji:'🐔', et:'kana',    sv:'höna' },
+    { emoji:'🦆', et:'part',    sv:'anka' },
+  ],
+  food: [
+    { emoji:'🍎', et:'õun',     sv:'äpple' },
+    { emoji:'🍌', et:'banaan',  sv:'banan' },
+    { emoji:'🥕', et:'porgand', sv:'morot' },
+    { emoji:'🍓', et:'maasikas',sv:'jordgubbe' },
+    { emoji:'🧀', et:'juust',   sv:'ost' },
+    { emoji:'🍞', et:'leib',    sv:'bröd' },
+    { emoji:'🥚', et:'muna',    sv:'ägg' },
+    { emoji:'🍰', et:'kook',    sv:'tårta' },
+    { emoji:'🍕', et:'pitsa',   sv:'pizza' },
+    { emoji:'🍦', et:'jäätis',  sv:'glass' },
+  ],
+  colors: [
+    { emoji:'🔴', et:'punane',  sv:'röd' },
+    { emoji:'🔵', et:'sinine',  sv:'blå' },
+    { emoji:'🟢', et:'roheline',sv:'grön' },
+    { emoji:'🟡', et:'kollane', sv:'gul' },
+    { emoji:'🟠', et:'oranž',   sv:'orange' },
+    { emoji:'🟣', et:'lilla',   sv:'lila' },
+    { emoji:'⚫', et:'must',    sv:'svart' },
+    { emoji:'⚪', et:'valge',   sv:'vit' },
+    { emoji:'🩷', et:'roosa',   sv:'rosa' },
+    { emoji:'🟤', et:'pruun',   sv:'brun' },
+  ],
+  home: [
+    { emoji:'🪑', et:'tool',    sv:'stol' },
+    { emoji:'🛏️', et:'voodi',   sv:'säng' },
+    { emoji:'🚪', et:'uks',     sv:'dörr' },
+    { emoji:'🪟', et:'aken',    sv:'fönster' },
+    { emoji:'💡', et:'lamp',    sv:'lampa' },
+    { emoji:'📚', et:'raamat',  sv:'bok' },
+    { emoji:'🪣', et:'ämber',   sv:'hink' },
+    { emoji:'🧸', et:'mängukaru',sv:'nalle' },
+    { emoji:'🖼️', et:'pilt',    sv:'tavla' },
+    { emoji:'🪴', et:'taim',    sv:'blomma' },
+  ],
+};
+
+const DIFF_CONFIG = {
+  easy:   { pairs: 6,  gridClass: 'grid-4x3', timeBonus: 60,  label: '😊 Lihtne' },
+  medium: { pairs: 8,  gridClass: 'grid-4x4', timeBonus: 90,  label: '😐 Keskmine' },
+  hard:   { pairs: 10, gridClass: 'grid-5x4', timeBonus: 120, label: '😤 Raske' },
+};
+
+const CAT_LABELS = {
+  animals: '🐾 Loomad',
+  food:    '🍎 Toit',
+  colors:  '🌈 Värvid',
+  home:    '🏠 Kodu',
+};
+
+let state = {
+  mode: 'et-pic', cat: 'animals', diff: 'easy',
+  cards: [], flipped: [], matched: [],
+  flips: 0, startTime: null, timerInterval: null,
+  elapsedSeconds: 0, score: 0,
+  pendingEntry: null, lbDiff: 'easy', highlightRow: null,
+};
+
+const API = '/api/scores/malu.json';
+
+async function loadScores() {
+  try { const r = await fetch(API); const d = await r.json(); return d && typeof d === 'object' ? d : {}; }
+  catch { return {}; }
+}
+
+async function saveScores(data) {
+  try { await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); }
+  catch {}
+}
+
+async function addScore(diff, entry) {
+  const all = await loadScores();
+  if (!all[diff]) all[diff] = [];
+  all[diff].push(entry);
+  all[diff].sort((a,b) => b.score - a.score);
+  all[diff] = all[diff].slice(0, 10);
+  await saveScores(all);
+  return all;
+}
+
+function calcScore(diff, pairs, flips, seconds) {
+  const base    = pairs * 100;
+  const penalty = Math.max(0, flips - pairs * 2) * 5;
+  const cfg     = DIFF_CONFIG[diff];
+  const bonus   = Math.max(0, Math.round((cfg.timeBonus - seconds) / cfg.timeBonus * 50));
+  return Math.max(0, base - penalty + bonus);
+}
+
+function calcStars(diff, pairs, flips, seconds) {
+  const ratio = flips / (pairs * 2);
+  const tRatio = seconds / DIFF_CONFIG[diff].timeBonus;
+  if (ratio <= 1.2 && tRatio < 0.8) return 3;
+  if (ratio <= 1.7 && tRatio < 1.2) return 2;
+  return 1;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function buildCards(mode, cat, diff) {
+  const cfg = DIFF_CONFIG[diff];
+  const pool = [...WORDS[cat]];
+  shuffle(pool);
+  const chosen = pool.slice(0, cfg.pairs);
+  const cards = [];
+  chosen.forEach((word, i) => {
+    cards.push({ id: i*2,   pairId: i, type: mode === 'et-sv' ? 'et' : 'emoji', word });
+    cards.push({ id: i*2+1, pairId: i, type: mode === 'et-sv' ? 'sv' : (mode === 'et-pic' ? 'et' : 'sv'), word });
+  });
+  shuffle(cards);
+  return cards;
+}
+
+function renderBoard() {
+  const grid = document.getElementById('card-grid');
+  const cfg  = DIFF_CONFIG[state.diff];
+  grid.className = 'card-grid ' + cfg.gridClass;
+  grid.innerHTML = '';
+  state.cards.forEach(card => {
+    const el = document.createElement('div');
+    el.className = 'mem-card';
+    el.dataset.id = card.id;
+    if (state.matched.includes(card.pairId)) el.classList.add('flipped','matched');
+    const isWord = card.type !== 'emoji';
+    const mainText = card.type === 'emoji' ? card.word.emoji : card.type === 'et' ? card.word.et : card.word.sv;
+    el.innerHTML = `
+      <div class="mem-card-inner">
+        <div class="mem-card-front">
+          <div class="card-back-pattern">🃏</div>
+          <div class="card-back-dots">${Array(9).fill('<span></span>').join('')}</div>
+        </div>
+        <div class="mem-card-back">
+          ${isWord ? `<div class="card-emoji">${card.word.emoji}</div><div class="card-word">${mainText}</div>`
+                   : `<div class="card-emoji">${mainText}</div>`}
+        </div>
+      </div>`;
+    el.addEventListener('click', () => onCardClick(card.id));
+    grid.appendChild(el);
+  });
+}
+
+function startGame() {
+  state.cards = buildCards(state.mode, state.cat, state.diff);
+  state.flipped = []; state.matched = [];
+  state.flips = 0; state.score = 0; state.elapsedSeconds = 0;
+  state.startTime = Date.now();
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(() => {
+    state.elapsedSeconds = Math.floor((Date.now() - state.startTime) / 1000);
+    const m = Math.floor(state.elapsedSeconds / 60), s = state.elapsedSeconds % 60;
+    document.getElementById('hud-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  }, 1000);
+  const cfg = DIFF_CONFIG[state.diff];
+  document.getElementById('hud-pairs').textContent = `0/${cfg.pairs}`;
+  document.getElementById('hud-flips').textContent = '0';
+  document.getElementById('hud-score').textContent = '0';
+  document.getElementById('hud-time').textContent  = '0:00';
+  renderBoard();
+  showScreen('screen-game');
+}
+
+let flipLock = false;
+
+function onCardClick(cardId) {
+  if (flipLock) return;
+  const card = state.cards.find(c => c.id === cardId);
+  if (!card || state.matched.includes(card.pairId) || state.flipped.find(c => c.id === cardId) || state.flipped.length >= 2) return;
+  const el = document.querySelector(`.mem-card[data-id="${cardId}"]`);
+  el.classList.add('flipped');
+  state.flipped.push(card);
+  if (state.flipped.length === 2) {
+    state.flips++;
+    document.getElementById('hud-flips').textContent = state.flips;
+    flipLock = true;
+    const [a, b] = state.flipped;
+    if (a.pairId === b.pairId) {
+      state.matched.push(a.pairId);
+      document.querySelector(`.mem-card[data-id="${a.id}"]`).classList.add('matched');
+      document.querySelector(`.mem-card[data-id="${b.id}"]`).classList.add('matched');
+      const cfg = DIFF_CONFIG[state.diff];
+      document.getElementById('hud-pairs').textContent = `${state.matched.length}/${cfg.pairs}`;
+      state.score = calcScore(state.diff, cfg.pairs, state.flips, state.elapsedSeconds);
+      document.getElementById('hud-score').textContent = state.score;
+      state.flipped = []; flipLock = false;
+      if (state.matched.length === cfg.pairs) { clearInterval(state.timerInterval); setTimeout(onGameEnd, 600); }
+    } else {
+      const elA = document.querySelector(`.mem-card[data-id="${a.id}"]`);
+      const elB = document.querySelector(`.mem-card[data-id="${b.id}"]`);
+      elA.classList.add('wrong'); elB.classList.add('wrong');
+      setTimeout(() => {
+        elA.classList.remove('flipped','wrong'); elB.classList.remove('flipped','wrong');
+        state.flipped = []; flipLock = false;
+      }, 900);
+    }
+  }
+}
+
+function onGameEnd() {
+  const cfg   = DIFF_CONFIG[state.diff];
+  const stars = calcStars(state.diff, cfg.pairs, state.flips, state.elapsedSeconds);
+  const score = state.score;
+  spawnConfetti();
+  document.getElementById('end-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+  const m = Math.floor(state.elapsedSeconds/60), s = state.elapsedSeconds%60;
+  document.getElementById('end-stats').innerHTML = `
+    <div class="end-stat"><div class="end-stat-val">${score}</div><div class="end-stat-lbl">Punktid</div></div>
+    <div class="end-stat"><div class="end-stat-val">${state.flips}</div><div class="end-stat-lbl">Pöörded</div></div>
+    <div class="end-stat"><div class="end-stat-val">${m}:${s.toString().padStart(2,'0')}</div><div class="end-stat-lbl">Aeg</div></div>`;
+  document.getElementById('end-title').textContent = stars===3?'Täiuslik! 🏆':stars===2?'Väga hea! 🎉':'Tubli! 👏';
+  document.getElementById('end-emoji').textContent = stars===3?'🏆':stars===2?'🎉':'👏';
+
+  loadScores().then(all => {
+    const list = all[state.diff] || [];
+    const qualifies = list.length < 10 || score > (list[list.length-1]?.score ?? 0);
+    const msg = document.getElementById('end-rank-msg');
+    if (qualifies) {
+      msg.innerHTML = '<div class="end-rank-notice">🌟 Uus rekord! Sisesta oma nimi.</div>';
+      state.pendingEntry = { score, diff: state.diff, cat: state.cat,
+        date: new Date().toLocaleDateString('et-EE', {day:'2-digit',month:'2-digit'}) };
+      document.getElementById('name-score-display').innerHTML =
+        `Sinu tulemus: <strong>${score} punkti</strong> · ${DIFF_CONFIG[state.diff].label}`;
+      showScreen('screen-name');
+    } else {
+      msg.innerHTML = '<div class="end-no-rank-notice">Proovi uuesti parema tulemuse saamiseks!</div>';
+      showScreen('screen-end');
+    }
+  });
+}
+
+async function submitName(name) {
+  const entry = { ...state.pendingEntry, name: name || 'Anonüüm' };
+  const all   = await addScore(entry.diff, entry);
+  const rank  = (all[entry.diff]||[]).findIndex(e => e.score===entry.score && e.name===entry.name);
+  state.highlightRow = rank;
+  const msg = document.getElementById('end-rank-msg');
+  if (rank >= 0) msg.innerHTML = `<div class="end-rank-notice">🎖️ Koht #${rank+1} edetabelis!</div>`;
+  showScreen('screen-end');
+}
+
+async function showLeaderboard(fromDiff) {
+  state.lbDiff = fromDiff || state.diff;
+  document.querySelectorAll('.lb-tab').forEach(t => t.classList.toggle('active', t.dataset.diff===state.lbDiff));
+  const all  = await loadScores();
+  const list = all[state.lbDiff] || [];
+  const body = document.getElementById('lb-body');
+  body.innerHTML = '';
+  if (!list.length) {
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Veel pole rekordeid!</td></tr>';
+  } else {
+    const rc = ['gold','silver','bronze'];
+    list.forEach((e,i) => {
+      const tr = document.createElement('tr');
+      if (state.highlightRow===i) tr.classList.add('highlight');
+      tr.innerHTML = `<td><span class="lb-rank ${rc[i]||''}">${i+1}</span></td>
+        <td>${e.name||'Anonüüm'}</td><td><strong>${e.score}</strong></td>
+        <td>${CAT_LABELS[e.cat]||e.cat}</td><td>${e.date||''}</td>`;
+      body.appendChild(tr);
+    });
+  }
+  showScreen('screen-leaderboard');
+}
+
+function spawnConfetti() {
+  const colors = ['#ffcc44','#ff6b8a','#44ddaa','#4d96ff','#ff9f43','#da77ff'];
+  for (let i=0;i<80;i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const sz = 6+Math.random()*10;
+    el.style.cssText = `left:${Math.random()*100}%;top:-20px;width:${sz}px;height:${sz}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${1.5+Math.random()*1.5}s;animation-delay:${Math.random()*0.8}s;
+      transform:rotate(${Math.random()*360}deg);`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),3500);
+  }
+}
+
+(function initStars() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars;
+  function resize() {
+    W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight;
+    stars = Array.from({length:80},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+0.3,o:Math.random(),s:(Math.random()-0.5)*0.008}));
+  }
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{s.o+=s.s;if(s.o<=0||s.o>=1)s.s*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${s.o*0.6})`;ctx.fill();});
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize); resize(); draw();
+})();
+
+function shuffle(arr) {
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+
+function setupSel(id, key) {
+  document.getElementById(id).querySelectorAll('.sel-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.getElementById(id).querySelectorAll('.sel-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state[key] = btn.dataset[key==='diff'?'diff':key==='mode'?'mode':'cat'];
+    });
+  });
+}
+
+setupSel('btns-mode','mode');
+setupSel('btns-cat','cat');
+setupSel('btns-diff','diff');
+
+document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('btn-lb').addEventListener('click', ()=>{state.highlightRow=null;showLeaderboard(state.diff);});
+document.getElementById('lb-back').addEventListener('click', ()=>showScreen('screen-menu'));
+document.getElementById('lb-tabs').querySelectorAll('.lb-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    state.lbDiff=tab.dataset.diff;
+    document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    showLeaderboard(state.lbDiff);
+  });
+});
+document.getElementById('name-submit').addEventListener('click',()=>submitName(document.getElementById('name-input').value.trim()));
+document.getElementById('name-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('name-submit').click();});
+document.getElementById('name-skip').addEventListener('click',()=>{state.pendingEntry=null;showScreen('screen-end');});
+document.getElementById('end-again').addEventListener('click', startGame);
+document.getElementById('end-menu').addEventListener('click',()=>{state.highlightRow=null;showScreen('screen-menu');});
+document.getElementById('end-lb').addEventListener('click',()=>showLeaderboard(state.diff));
+</script>
+</body>
+</html>
