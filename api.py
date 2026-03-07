@@ -68,7 +68,7 @@ class ScoresHandler(BaseHTTPRequestHandler):
             self._send_json(400, {'error': 'invalid path'})
             return
         try:
-            length = int(self.headers.get('Content-Length', 0))
+            length = min(int(self.headers.get('Content-Length', 0)), 1_000_000)
             body = self.rfile.read(length)
             data = json.loads(body)
             os.makedirs(SCORES_DIR, exist_ok=True)
@@ -77,7 +77,7 @@ class ScoresHandler(BaseHTTPRequestHandler):
                 json.dump(data, f, ensure_ascii=False, indent=2)
             self._send_json(200, {'ok': True})
         except Exception as e:
-            self._send_json(500, {'error': str(e)})
+            self._send_json(500, {'error': 'internal server error'})
 
 
 if __name__ == '__main__':

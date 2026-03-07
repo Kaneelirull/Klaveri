@@ -528,7 +528,6 @@ const state = {
   streak: 0,
   correctInLevel: 0,
   highScore: parseInt(localStorage.getItem('kalkunaator_hs') || '0'),
-  highLevel: parseInt(localStorage.getItem('kalkunaator_hl') || '1'),
   calc: null,
   asteroids: [],
   rocketActive: false,
@@ -602,6 +601,11 @@ function randHSL(isTarget) {
   return `hsl(${h}, 60%, 45%)`;
 }
 
+function darkenHSL(hslStr) {
+  // Replace the lightness value with 20% for a darker shade
+  return hslStr.replace(/,\s*[\d.]+%\s*\)$/, ', 20%)');
+}
+
 function createAsteroidEl(ast) {
   const el = document.createElement('div');
   el.className = 'asteroid';
@@ -610,7 +614,7 @@ function createAsteroidEl(ast) {
   el.style.width = size + 'px';
   el.style.height = size + 'px';
   const color = randHSL(ast.isTarget);
-  el.style.background = `radial-gradient(circle at 35% 30%, ${color}, hsl(from ${color} h s 20%))`;
+  el.style.background = `radial-gradient(circle at 35% 30%, ${color}, ${darkenHSL(color)})`;
   el.style.boxShadow = ast.isTarget
     ? `0 0 18px 4px rgba(0,245,255,0.4), inset 0 0 14px rgba(255,255,255,0.15)`
     : `0 0 10px 2px rgba(179,68,255,0.3), inset 0 0 10px rgba(255,255,255,0.1)`;
@@ -659,7 +663,7 @@ function generateCalc(level) {
     for (let i = 0; i < ops.length; i++) {
       result = ops[i] === '+' ? result + terms[i+1] : result - terms[i+1];
     }
-  } while (result < cfg.min || result > cfg.max && attempts < 50);
+  } while ((result < cfg.min || result > cfg.max) && attempts < 50);
   return { terms, ops, result };
 }
 
@@ -913,10 +917,6 @@ function setLevel(lvl) {
   document.querySelectorAll('.lvl-btn').forEach(b => {
     b.classList.toggle('active', parseInt(b.dataset.level) === lvl);
   });
-  if (lvl > state.highLevel) {
-    state.highLevel = lvl;
-    localStorage.setItem('kalkunaator_hl', lvl);
-  }
   newRound();
 }
 

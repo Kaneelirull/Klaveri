@@ -32,7 +32,6 @@
     align-items: center;
     justify-content: center;
     padding: 16px;
-    cursor: none;
   }
   #cursor {
     position: fixed;
@@ -146,7 +145,7 @@
     border: none;
     background: rgba(0,0,0,0.35);
     color: #fff;
-    cursor: none;
+    cursor: pointer;
     transition: background 0.2s, transform 0.15s;
   }
   #start-btn:hover { background: rgba(0,0,0,0.55); transform: scale(1.05); }
@@ -164,7 +163,7 @@
     padding: 9px 20px;
     border-radius: 10px;
     border: 1px solid rgba(255,255,255,0.12);
-    cursor: none;
+    cursor: pointer;
     text-decoration: none;
     transition: all 0.2s;
   }
@@ -493,7 +492,6 @@ document.getElementById('new-maze-btn').addEventListener('click', ()=>initLevel(
 
 // ── Go ──
 initLevel(0);
-cancelAnimationFrame(raf);
 loop();
 </script>
 </body>

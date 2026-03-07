@@ -5,8 +5,9 @@
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Klaviatuuri Kangelane! 🎮</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
 
   :root {
     --bg: #0f0c29;
@@ -325,6 +326,23 @@
   .story-card .sc-title { font-family:'Fredoka One'; font-size:1.1rem; color:var(--accent3); }
   .story-card .sc-preview { font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:6px; line-height:1.4; }
 
+  /* Back button */
+  .back-home-btn {
+    position: fixed;
+    top: 12px; left: 12px;
+    z-index: 999;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.6);
+    text-decoration: none;
+    font-family: inherit;
+    transition: color 0.2s;
+  }
+  .back-home-btn:hover { color: #fff; }
+
   /* responsive */
   @media(max-width:600px) {
     .logo { font-size:2rem; }
@@ -351,7 +369,7 @@
     <div class="score-badge">⭐ <span id="total-score">0</span></div>
   </div>
 
-  <a href="../../index.html" style="position:fixed;top:12px;left:12px;z-index:999;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.8rem;color:rgba(255,255,255,0.6);text-decoration:none;font-family:inherit;transition:all 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">← Tagasi</a>
+  <a href="../../index.html" class="back-home-btn">← Tagasi</a>
 
   <!-- SCREEN: Home -->
   <div class="screen active" id="screen-home">
@@ -576,7 +594,7 @@ const STORIES = [
 let allCapsMode = true;
 let selectedStory = 0;
 let currentLevel = 1;
-let unlockedLevel = 3;
+let unlockedLevel = 1;
 let totalScore = 0;
 let levelScores = {};
 

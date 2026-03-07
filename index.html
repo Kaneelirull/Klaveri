@@ -25,7 +25,6 @@
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    cursor: none;
   }
 
   /* Custom cursor */
@@ -154,8 +153,12 @@
     position: relative;
     aspect-ratio: 16/10;
     overflow: hidden;
-    cursor: none;
+    cursor: pointer;
     animation: fadeUp 0.6s ease both;
+  }
+  .game-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
   .game-card:nth-child(1) { animation-delay: 0.5s; }
   .game-card:nth-child(2) { animation-delay: 0.6s; }
@@ -287,21 +290,6 @@
   .card-play:hover { background: #fff; }
   .card-play svg { width: 10px; height: 10px; fill: currentColor; }
 
-  /* Coming soon card */
-  .game-card.coming-soon .card-bg { filter: saturate(0) brightness(0.3); }
-  .game-card.coming-soon:hover .card-bg { filter: saturate(0) brightness(0.3); transform: none; }
-  .game-card.coming-soon .card-inner { border: 1px dashed rgba(255,255,255,0.08); }
-  .coming-soon-badge {
-    position: absolute;
-    top: 16px; left: 16px;
-    font-size: 0.65rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 4px 10px;
-    border-radius: 2px;
-  }
 
   /* Footer */
   footer {
@@ -349,7 +337,7 @@
 <div class="games-grid">
 
   <!-- Game 1: Klaviatuuri Kangelane -->
-  <div class="game-card" onclick="location.href='games/klaverikangelane/'">
+  <div class="game-card" tabindex="0" onclick="location.href='games/klaverikangelane/'">
     <div class="card-inner">
       <div class="card-bg">⌨️</div>
       <div class="card-gradient"></div>
@@ -366,7 +354,7 @@
   </div>
 
   <!-- Game 2: Värviõhupallid -->
-  <div class="game-card" onclick="location.href='games/varviohupallid/'">
+  <div class="game-card" tabindex="0" onclick="location.href='games/varviohupallid/'">
     <div class="card-inner">
       <div class="card-bg">🎈</div>
       <div class="card-gradient"></div>
@@ -384,7 +372,7 @@
   </div>
 
   <!-- Game 3: Kalkunaator -->
-  <div class="game-card" onclick="location.href='games/kalkunaator/'">
+  <div class="game-card" tabindex="0" onclick="location.href='games/kalkunaator/'">
     <div class="card-inner">
       <div class="card-bg">🚀</div>
       <div class="card-gradient"></div>
@@ -401,7 +389,7 @@
   </div>
 
   <!-- Game 4: DOSBox -->
-  <div class="game-card" onclick="location.href='games/dosbox/'">
+  <div class="game-card" tabindex="0" onclick="location.href='games/dosbox/'">
     <div class="card-inner">
       <div class="card-bg">🖥️</div>
       <div class="card-gradient"></div>
@@ -417,15 +405,19 @@
     </div>
   </div>
 
-  <!-- Coming soon -->
-  <div class="game-card coming-soon">
+  <!-- Game 5: Hiire Mäng -->
+  <div class="game-card" tabindex="0" onclick="location.href='games/hiire-laburint/'">
     <div class="card-inner">
       <div class="card-bg">🐭</div>
       <div class="card-gradient"></div>
-      <div class="coming-soon-badge">Tulemas</div>
       <div class="card-content">
+        <div class="card-tag">Hiir · 3 taset</div>
         <div class="card-title">Hiire Mäng</div>
-        <div class="card-desc">Midagi põnevat on tegemisel.</div>
+        <div class="card-desc">Liigu hiirega läbi labürindi ilma seinu puudutamata!</div>
+        <a class="card-play" href="games/hiire-laburint/">
+          <svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg>
+          Mängi
+        </a>
       </div>
     </div>
   </div>
@@ -458,8 +450,8 @@
   }
   animateRing();
 
-  // Hover effects
-  document.querySelectorAll('.game-card:not(.coming-soon)').forEach(el => {
+  // Hover effects + keyboard activation for cards
+  document.querySelectorAll('.game-card').forEach(el => {
     el.addEventListener('mouseenter', () => {
       cursor.classList.add('hovering');
       ring.classList.add('hovering');
@@ -468,7 +460,23 @@
       cursor.classList.remove('hovering');
       ring.classList.remove('hovering');
     });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        el.click();
+      }
+    });
   });
+
+  // Load site config
+  fetch('data/config/site.json')
+    .then(r => r.json())
+    .then(cfg => {
+      if (cfg.siteName) document.querySelector('.logo-mark').textContent = cfg.siteName.toUpperCase();
+      if (cfg.siteSubtitle) document.querySelector('.logo-sub').textContent = cfg.siteSubtitle;
+      if (cfg.accentColor) document.documentElement.style.setProperty('--accent', cfg.accentColor);
+    })
+    .catch(() => {});
 </script>
 </body>
 </html>

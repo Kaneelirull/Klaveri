@@ -348,7 +348,11 @@ function drawBg() {
   requestAnimationFrame(drawBg);
 }
 
-window.addEventListener('resize', () => { initStars(); });
+window.addEventListener('resize', () => {
+  bgCanvas.width  = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+  initStars();
+});
 initStars();
 drawBg();
 
@@ -363,7 +367,7 @@ let active = false;
 let targetColor = null;
 let liveBalloons = new Map(); // id -> { el, colorId }
 let bId = 0;
-const WAVE_SIZE = 5;
+let balloonPool = [];
 
 const stage      = document.getElementById('stage');
 const scorePill  = document.getElementById('score-pill');
@@ -378,7 +382,7 @@ const wordHint   = document.getElementById('word-hint');
 function startGame(l) {
   lang = l;
   score = 0;
-  timeLeft = 61;
+  timeLeft = 60;
   active = true;
   balloonPool = [];
   bId = 0;
