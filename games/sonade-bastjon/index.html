@@ -64,6 +64,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .q-bar{height:5px;background:rgba(255,255,255,.1);border-radius:3px;margin-bottom:16px;overflow:hidden;}
 .q-fill{height:100%;background:var(--acc);border-radius:3px;transition:width .08s linear;}
 .q-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.q-opts.cols3{grid-template-columns:1fr 1fr 1fr;}
 .q-opt{padding:11px 8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:var(--text);border-radius:9px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;transition:all .14s;}
 .q-opt:hover:not(:disabled){background:rgba(255,204,68,.14);border-color:var(--acc);}
 .q-opt.correct{background:rgba(68,255,136,.18);border-color:var(--ok);color:var(--ok);}
@@ -275,7 +276,7 @@ const WORDS = {
     {emoji:'🏠',et:'maja',sv:'hus'},{emoji:'🚪',et:'uks',sv:'dörr'},
     {emoji:'🪟',et:'aken',sv:'fönster'},{emoji:'🪑',et:'tool',sv:'stol'},
     {emoji:'🍽️',et:'laud',sv:'bord'},{emoji:'🛏️',et:'voodi',sv:'säng'},
-    {emoji:'🪆',et:'vaip',sv:'matta'},{emoji:'💡',et:'lamp',sv:'lampa'},
+    {emoji:'🛋️',et:'diivan',sv:'soffa'},{emoji:'💡',et:'lamp',sv:'lampa'},
     {emoji:'📚',et:'raamat',sv:'bok'},{emoji:'🖼️',et:'pilt',sv:'bild'},
   ],
 };
@@ -290,6 +291,7 @@ const TCFG = {
   slow:  {emoji:'❄️',name:'Külmutaja',cost:75, range:100,splash:0,  slows:true, col:'#44aaff'},
   splash:{emoji:'💣',name:'Plahvatus',cost:100,range:90, splash:80, slows:false,col:'#ff8844'},
 };
+const FIRE_CD={basic:1500,slow:2000,splash:3000};
 
 // ==================== PATH ====================
 // Canvas 760x500, cell=40 → 19cols x 12rows (+ partial)
@@ -360,6 +362,7 @@ let hovered=null,selType='basic';
 let lbData={easy:[],medium:[],hard:[]};
 let lbFromWin=false;
 let lastTs=0,rafId=null,eid=0;
+let bannerRem=0;
 
 // ==================== STARS ====================
 const SC=document.getElementById('starCanvas'),SX=SC.getContext('2d');
@@ -445,6 +448,7 @@ function startGame(){
 
 function nextWave(){
   wave++;
+  towers.forEach(t=>{t.charged=false;t.locked=false;t.silent=false;t.fireCD=0;});
   const cfg=DCFG[diff];
   const n=cfg.ePerWave+Math.floor(wave/4);
   const ws=WORDS[cat];
@@ -463,6 +467,18 @@ function loop(ts){
 }
 
 function update(dt){
+  // Wave banner countdown (respects pause since update only runs when !paused)
+  if(bannerRem>0){
+    bannerRem-=dt/1000;
+    if(bannerRem<=0){
+      bannerRem=0;
+      document.getElementById('waveBanner').classList.remove('active');
+      nextWave();
+    } else {
+      document.getElementById('wbNext').textContent=`Järgmine laine ${Math.ceil(bannerRem)}s pärast...`;
+    }
+    return;
+  }
   // Spawn
   if(waveActive&&waveQueue.length){
     spawnT+=dt;
@@ -481,12 +497,39 @@ function update(dt){
       continue;
     }
     const p=pathPos(e.prog);e.x=p.x;e.y=p.y;
-    if(!e.inQ&&!activeQ){
+    if(!activeQ){
       for(const t of towers){
-        if(t.locked) continue;
+        if(t.charged||t.locked||t.silent) continue;
         if(Math.hypot(e.x-(t.col*CELL+CELL/2),e.y-(t.row*CELL+CELL/2))<=TCFG[t.type].range){
-          e.inQ=true;t.locked=true;triggerQ(t,e);break;
+          t.locked=true;triggerQ(t,e);break;
         }
+      }
+    }
+  }
+  // Auto-fire charged towers
+  for(const t of towers){
+    if(!t.charged) continue;
+    t.fireCD=Math.max(0,t.fireCD-dt);
+    if(t.fireCD>0) continue;
+    const tc=TCFG[t.type];
+    const tx=t.col*CELL+CELL/2,ty=t.row*CELL+CELL/2;
+    if(tc.slows){
+      let hit=false;
+      enemies.forEach(e=>{
+        if(Math.hypot(e.x-tx,e.y-ty)<=tc.range&&e.hp>0){
+          e.slowed=true;e.slowT=2000;burst(e.x,e.y,'#44aaff');hit=true;
+        }
+      });
+      if(hit) t.fireCD=FIRE_CD[t.type];
+    } else {
+      let nearest=null,nearD=Infinity;
+      enemies.forEach(e=>{
+        const d=Math.hypot(e.x-tx,e.y-ty);
+        if(d<=tc.range&&e.hp>0&&d<nearD){nearD=d;nearest=e;}
+      });
+      if(nearest){
+        projs.push({x:tx,y:ty,tgt:nearest,tower:t,col:tc.col});
+        t.fireCD=FIRE_CD[t.type];
       }
     }
   }
@@ -517,7 +560,7 @@ function spawnEnemy(){
   enemies.push({id:eid++,word:w,prog:0,
     spd:DCFG[diff].spd*.00011,
     hp:DCFG[diff].hits,maxHp:DCFG[diff].hits,
-    slowed:false,slowT:0,inQ:false,
+    slowed:false,slowT:0,
     disp:dispText(w),x:WP[0].x,y:WP[0].y});
 }
 
@@ -527,9 +570,10 @@ function hitEnemy(e,t){
     if(e&&e.hp>0){e.slowed=true;e.slowT=2000;}
     burst(e.x,e.y,'#44aaff');
   } else if(tc.splash>0){
-    const tx=t.col*CELL+CELL/2,ty=t.row*CELL+CELL/2;
+    const ex=e.x,ey=e.y;
+    burst(ex,ey,'#ff8844');
     enemies.forEach(e2=>{
-      if(Math.hypot(e2.x-tx,e2.y-ty)<=tc.splash)dmgEnemy(e2);
+      if(Math.hypot(e2.x-ex,e2.y-ey)<=tc.splash)dmgEnemy(e2);
     });
   } else dmgEnemy(e);
 }
@@ -565,6 +609,7 @@ function triggerQ(tower,enemy){
   document.getElementById('qWord').textContent=enemy.disp;
   document.getElementById('qFill').style.width='100%';
   const od=document.getElementById('qOpts');od.innerHTML='';
+  od.className='q-opts'+(opts.length===5?' cols3':'');
   opts.forEach(o=>{
     const b=document.createElement('button');b.className='q-opt';b.textContent=o;
     b.addEventListener('click',()=>answerQ(o));od.appendChild(b);
@@ -594,17 +639,13 @@ function answerQ(ans){
   setTimeout(()=>{
     document.getElementById('qPopup').classList.remove('active');
     const q=activeQ;activeQ=null;
-    if(q){q.tower.locked=false;if(q.enemy)q.enemy.inQ=false;}
+    if(q){q.tower.locked=false;}
     if(ok){
       correct++;
-      const e=q.enemy;
-      if(e&&e.hp>0&&enemies.includes(e)){
-        const tc=TCFG[tower.type];
-        if(tc.slows){e.slowed=true;e.slowT=2000;burst(e.x,e.y,'#44aaff');}
-        else projs.push({x:tower.col*CELL+CELL/2,y:tower.row*CELL+CELL/2,
-          tgt:e,tower,col:tc.col});
-      }
+      q.tower.charged=true;
+      q.tower.fireCD=0;
     } else {
+      q.tower.silent=true;
       gold=Math.max(0,gold-5);
     }
     score=calcScore();updateHUD();
@@ -667,9 +708,12 @@ function drawTowers(){
     const cx=t.col*CELL+CELL/2,cy=t.row*CELL+CELL/2;
     const tc=TCFG[t.type];
     CTX.beginPath();CTX.arc(cx,cy,CELL/2-3,0,Math.PI*2);
-    CTX.fillStyle=t.locked?'rgba(80,80,80,.5)':tc.col+'44';
-    CTX.fill();
-    CTX.strokeStyle=t.locked?'#666':tc.col;CTX.lineWidth=2;CTX.stroke();
+    let fillC,strokeC,lw=2;
+    if(t.locked){fillC='rgba(80,80,80,.5)';strokeC='#666';}
+    else if(t.charged){fillC=tc.col+'88';strokeC=tc.col;lw=3;}
+    else{fillC=tc.col+'22';strokeC=tc.col+'99';}
+    CTX.fillStyle=fillC;CTX.fill();
+    CTX.strokeStyle=strokeC;CTX.lineWidth=lw;CTX.stroke();
     CTX.font=`${CELL*.54}px serif`;CTX.textAlign='center';CTX.textBaseline='middle';
     CTX.fillText(tc.emoji,cx,cy+1);
   });
@@ -677,7 +721,8 @@ function drawTowers(){
 
 function drawEnemies(){
   enemies.forEach(e=>{
-    const isEmoji=e.disp.length<=2&&e.disp.charCodeAt(0)>127;
+    const _chars=[...e.disp];
+    const isEmoji=_chars.length<=2&&_chars[0].codePointAt(0)>127;
     const fs=isEmoji?'16px serif':'bold 12px Nunito,sans-serif';
     CTX.font=fs;
     const tw=CTX.measureText(e.disp).width;
@@ -741,19 +786,17 @@ function rrect(ctx,x,y,w,h,r){
 // ==================== WAVE BANNER ====================
 function showWaveBanner(){
   document.getElementById('wbTitle').textContent=`Laine ${wave} läbitud! 🎉`;
+  document.getElementById('wbNext').textContent=`Järgmine laine 5s pärast...`;
   document.getElementById('waveBanner').classList.add('active');
-  let rem=5;
-  document.getElementById('wbNext').textContent=`Järgmine laine ${rem}s pärast...`;
-  const iv=setInterval(()=>{
-    rem--;
-    document.getElementById('wbNext').textContent=`Järgmine laine ${rem}s pärast...`;
-    if(rem<=0){clearInterval(iv);document.getElementById('waveBanner').classList.remove('active');nextWave();}
-  },1000);
+  bannerRem=5;
 }
 
 // ==================== END ====================
 function endGame(won){
   gameRunning=false;if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  document.getElementById('qPopup').classList.remove('active');
+  if(qInterval){clearInterval(qInterval);qInterval=null;}
+  activeQ=null;
   score=calcScore();
   const acc=total>0?correct/total:1;
   const stats=`Skoor: <b>${score}</b><br>Laine: <b>${wave}/${totalWaves}</b><br>Tapetud: <b>${killed}</b><br>Täpsus: <b>${Math.round(acc*100)}%</b>`;
@@ -811,7 +854,7 @@ GC.addEventListener('click',e=>{
   const k=c+','+ro;
   if(BUILD_SET.has(k)&&!towers.some(t=>t.col===c&&t.row===ro)&&towers.length<12){
     const cost=TCFG[selType].cost;
-    if(gold>=cost){gold-=cost;towers.push({col:c,row:ro,type:selType,locked:false});updateHUD();}
+    if(gold>=cost){gold-=cost;towers.push({col:c,row:ro,type:selType,locked:false,charged:false,silent:false,fireCD:0});updateHUD();}
   }
 });
 
